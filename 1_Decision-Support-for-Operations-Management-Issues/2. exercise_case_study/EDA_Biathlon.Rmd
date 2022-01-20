@@ -1,0 +1,28 @@
+---
+title: "EDA_Biathlon"
+author: "Diego Uchendu"
+date: "09/05/2020"
+output: html_document
+---
+Extract data
+```{r, proj-1, echo=TRUE, warning=TRUE, collapse=TRUE}
+dat <- read.csv("exercise_case_study/biathlon_results_women.csv")
+str(dat)
+```
+
+##Data Types
+The data above has 24 Variables:
+$ Factors: 11$,$int: 4$, $num: 9$
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

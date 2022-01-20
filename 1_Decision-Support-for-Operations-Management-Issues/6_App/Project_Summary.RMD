@@ -1,0 +1,631 @@
+---
+title: "Project_Summary"
+author: "Diego Uchendu"
+date: "25/08/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(kableExtra)
+library(knitr)
+library(gtools)
+```
+```{r}
+library(ROI)
+library(ROI.plugin.alabama)
+```
+
+# Data
+
+```{r}
+library(readxl)
+```
+
+
+```{r}
+product_data <- read_excel("Data_ordering.xlsx",sheet = "product data")
+box_data <- read_excel("Data_ordering.xlsx",sheet = "box data")
+```
+
+
+```{r}
+#rack data
+Total_racks=8
+levels_per_rack=4
+rack_length= 6000
+rack_width=1750
+rack_height=300
+```
+
+
+
+
+```{r}
+Racks<- data.frame(Total_racks,levels_per_rack,rack_length,rack_width,rack_height)
+colnames(Racks)<- c("Total_racks","levels_per_rack","length(mm)","rack_width(mm)","rack_height(mm)")
+rownames(Racks)<-"Rack Information"
+
+Racks
+#kable(Racks,digits = c(1,1,1,1,1), caption= "Storage Information", format= "pandoc")
+```
+
+## Box data
+
+```{r}
+box_data
+```
+
+
+## Product data 
+
+```{r}
+#product_data
+product_data<-cbind(1:62,product_data)
+colnames(product_data)<- c("N0", "material ID","demand per day","box ID","pieces/box","price")
+
+#kable(product_data,format = "pandoc")
+```
+
+
+
+
+```{r}
+
+product_data$demand_per_year= ceiling((product_data$`demand per day` *262)/ product_data$`pieces/box`) 
+
+product_data$box_cost= product_data$`pieces/box`*product_data$price
+```
+
+
+
+
+```{r}
+product_data <- merge(product_data, box_data[,c("box ID", "ordering cost (€)")], by = "box ID")
+
+colnames(product_data)[9] <- "ordering_cost"
+
+
+#kable(product_data,digits = c(1,1,1,1,1,1,1,1), caption= "Merged data with yearly demand", format= "pandoc")
+
+#product_data<- product_data[,c("N0", "material ID","demand per day","box ID","pieces/box","price")]
+#product_data
+```
+
+
+```{r}
+product_data<- product_data[order(product_data$N0),]
+
+row.names(product_data)<-1:62
+```
+
+
+```{r}
+#kable(product_data,format = "pandoc")
+
+
+product_data
+```
+
+
+
+## EOQ
+
+
+
+```{r}
+#dei= demand_per_year, cori= ordering cost for box i
+#cord= ordering cost, pri= box cost, h= interest rate
+
+# directly vectorized
+so_eoq_fun <- Vectorize(function(dei,cori,cord,pri,h){
+  eoq<- sqrt((2*dei*(cori+cord))/(pri*h))
+  return(eoq)
+})
+
+# maximum EOQ provided there is no coordination of ordering cycles (i.e., cord are not shared among parallely ordered items)
+vec_so_eoq_fun.max <- so_eoq_fun(dei = product_data$demand_per_year,cori=product_data$ordering_cost,cord=1500,pri=product_data$box_cost,h=0.10)
+# minimum EOQ disregarding common ordering cost cord
+vec_so_eoq_fun.min <- so_eoq_fun(dei = product_data$demand_per_year,cori=product_data$ordering_cost,cord=0,pri=product_data$box_cost,h=0.10)
+
+product_data$eoq.min <- round(vec_so_eoq_fun.min)
+product_data$eoq.max <- round(vec_so_eoq_fun.max)
+#product_data
+
+#kable(product_data,digits = c(1,1,1,1,1,1,1,1), caption= "Both EOQs added to the table", format= "pandoc")
+
+product_data
+```
+
+
+## Lane Occupation
+
+
+```{r}
+# constraints #####################################
+# this can be formulated more elegantly, but it works and that suffices
+b_sorting <- double(length(product_data$`box ID`)) 
+b_not_sorting <-double(length(product_data$`box ID`))
+
+for(j in 1: length(box_data$`box ID`)){
+  for (k in 1:length(product_data$`box ID`)) {
+    if(box_data$`box ID`[j]==product_data$`box ID`[k]){
+      
+      if(box_data$sorting[j]=="width"){
+        b_sorting[k] <- box_data$width[j]
+        b_not_sorting[k]<- box_data$length[j]
+        
+      }else{
+        b_sorting[k] <- box_data$length[j]
+        b_not_sorting[k]<- box_data$width[j]
+      }
+    }
+  }
+  
+}
+
+product_data$b_sorting <- b_sorting 
+product_data$b_not_sorting <- b_not_sorting
+#product_data
+
+#kable(product_data,digits = c(1,1,1,1,1,1,1,1), caption= "Both EOQs added to the table", format= "pandoc")
+
+product_data
+
+```
+## Lane EOQ max and min
+
+```{r}
+lane <- ceiling(product_data$eoq.max * (product_data$b_not_sorting/rack_length))
+laneso<- data.frame(rbind(lane))
+rownames(laneso)<- "lanes"
+colnames(laneso)<- 1:62
+#kable(laneso,format = "pandoc",caption = "number of lanes per item")
+
+rack_total_width <-51200  #rack_width * 4 * 8
+#rack_total_width #56000
+
+lane.min <- ceiling(product_data$eoq.min * product_data$b_not_sorting / rack_length)
+#lane.min
+lane.max <- ceiling(product_data$eoq.max * product_data$b_not_sorting / rack_length)
+
+#lane.max
+
+# total rack width 
+
+rack_total_width <- 51200 # rack_width * 4 * 8
+
+lane.df<- data.frame(rbind(lane.min,lane.max))
+rownames(lane.df)<-c("Min lane","Max lane")
+colnames(lane.df)<-1:62
+#kable(lane.df,caption = "Number of lanes that minimizes cost",format = "pandoc")
+
+lane.df
+
+
+```
+
+## Ignor displaying
+
+```{r}
+# overflow in mm
+overflow.mm.lane.min<- sum(lane.min*product_data$b_sorting) - rack_total_width
+overflow.mm.lane.max<-sum(lane.max*product_data$b_sorting) - rack_total_width
+# relative overflow in %
+opt_cap_in_mm <- sum(lane.min*product_data$b_sorting)
+
+overflow.per.lane.min<-(sum(lane.min*product_data$b_sorting) - rack_total_width)/rack_total_width*100
+overflow.per.lane.max<- (sum(lane.max*product_data$b_sorting) - rack_total_width)/rack_total_width*100
+n0_same_cap_needed<- (sum(lane.max*product_data$b_sorting) - rack_total_width)/rack_total_width
+overflow<- data.frame(overflow.mm.lane.min,overflow.mm.lane.max,overflow.per.lane.min,overflow.per.lane.max,n0_same_cap_needed)
+
+colnames(overflow)<-c("mm_lane_min","mm_lane_max","%_lane_min","%_lane.max","n0_same_cap_needed")
+rownames(overflow)<- "Overflow"
+
+#kable(overflow,caption = "Rack Capacity overflow in mm and percentage",format = "pandoc")
+
+#product_data
+```
+
+
+```{r}
+#get the width of the lanes in mm
+rack_width_occupied=sum(lane.min*product_data$b_sorting)
+kable(paste(rack_width_occupied,"mm"," is the total expected to be occupied"))
+
+if(rack_width_occupied <= rack_total_width){
+  print(paste0("Capacity constraint fulfilled: ", rack_width_occupied, "<=",rack_total_width))
+ 
+}else {
+  violated <- rack_width_occupied - rack_total_width
+
+## kable((paste0("Capacity constraint violated by: ",violated )), format = "pandoc")
+}
+
+```
+
+
+
+# Mathematical model
+
+## Separate Ordering (SO)
+### Not Constained using EOQ
+
+```{r}
+n <- length(product_data$`material ID`) #number of materials
+cori <- product_data$ordering_cost   #ordering cost for each items
+cord <-  1500    #ordering cost whenever there is an order
+dei <- product_data$demand_per_year
+h<-0.10
+box_cost <- product_data$box_cost #pri
+
+# objective function --> I dropped the 1500*62 as it is not decision relevant
+obj.fun <- function(q, d= dei, c.or = cori, c.h = h*box_cost  ) (1500*62)+(sum((dei/q)*c.or)+ sum(c.h*(q/2)))
+# benchmarks
+#obj.fun(product_data$eoq.max)
+#obj.fun(product_data$eoq.min)
+# constraint function --> also contains the ceiling of lanes and a sum was missing
+const.fun <- function(q, bns = product_data$b_not_sorting, bs = product_data$b_sorting, rl = rack_length) {
+  sum(bs * ceiling( bns * q / rl))
+  }
+
+#const.fun(product_data$eoq.max)
+#const.fun(product_data$eoq.min)
+# try to figure out a freasible starting solution
+#const.fun(product_data$eoq.min/10) -  rack_total_width
+
+
+obj.const<- data.frame(rbind(c(obj.fun(product_data$eoq.max),const.fun(product_data$eoq.max)),c(obj.fun(product_data$eoq.min),const.fun(product_data$eoq.min) )))
+
+colnames(obj.const)<-c("Cost Function (€)", "Capacity in (mm)") 
+rownames(obj.const)<-c("Eoq Max","Eoq Min")
+
+#kable(obj.const,caption = "Cost Values and capacities", format="pandoc")
+obj.const
+```
+
+
+
+### Seperate Ordering With Constraint
+
+using eoq.min or eoq.max in obj.fun yields same results.
+```{r}
+qopt <- OP(
+  objective = F_objective(F=obj.fun ,n=n),
+  types = rep("C",n),
+  bounds = V_bound(ub= product_data$eoq.min , lb= rep(1, n)),
+  constraints = F_constraint(F=const.fun,
+                             dir="<=",
+                             rhs = rack_total_width)
+)
+
+#This shows that minimum EOQ is too big and therefore will not meet the rack space constraint.
+#const.fun(min(product_data$eoq.max))#366272
+#const.fun(min(product_data$eoq.max)/8)# 61428  still > 56000
+#const.fun(min(product_data$eoq.max)/8.7)#52716 < 56000
+#const.fun(min(product_data$eoq.max)/10)# 33098 < 56000 is much lower but this can still be the starting value
+#round(min(product_data$eoq.max)/10) #15
+
+copt_sol <- ROI_solve(qopt, start = rep(min(product_data$eoq.max)/10,n), solver = "alabama" )
+# always check whether the algorithm converged
+#copt_sol# The objective value is: 101625.9
+# solution
+#copt_sol$solution #vector of optimal Quantity that meets the space constraints and minimizes the Obj function.
+#round(copt_sol$solution)
+#copt_sol$objval #101625.9
+
+
+
+#const.fun(copt_sol$solution)#55884
+#const.fun(floor(copt_sol$solution))#55092
+
+
+#obj.fun(copt_sol$solution)#101625.9
+#obj.fun(floor(copt_sol$solution))#104639.7  rounded q values
+
+copt_solution<-data.frame(obj.fun(floor(copt_sol$solution)),rbind(floor(copt_sol$solution)))
+colnames(copt_solution)<-c("cost",1:62)
+rownames(copt_solution)< "constrained"
+
+#kable(copt_solution,caption = "Capacitated values for cost and Quantity",format = "pandoc")
+
+copt_solution
+```
+
+
+### Seperate Ordering no Constraint
+
+
+```{r}
+rack_total_width <- 51200
+#qopt1 <- OP(
+#  objective = F_objective(F=obj.fun ,n=n),
+ # types = rep("C",n),
+  #bounds = V_bound(ub= product_data$eoq.max , lb= rep(1, n)),
+)
+
+#copt_sol1 <- ROI_solve(qopt1, start = rep(min(product_data$eoq.max)/10,n), solver = "alabama" )
+# always check whether the algorithm converged
+#copt_sol1$objval
+```
+
+
+```{r}
+#copt_noconst<-data.frame(obj.fun(floor(copt_sol1$solution)),rbind(floor(copt_sol1$solution)))
+#colnames(copt_noconst)<-c("cost",1:62)
+#rownames(copt_noconst)< "unconstrained"
+#copt_noconst
+```
+
+### EOQ 
+
+unconstrained, just pass in eoq max
+```{r}
+obj.fun <- function(q, d= dei, c.or = cori, c.h = h*box_cost  ) (1500*62)+(sum((dei/q)*c.or)+ sum(c.h*(q/2)))
+obj.fun(product_data$eoq.max)#172279.7
+```
+
+
+
+```{r}
+const.unconst <- data.frame(rbind(c(round(obj.fun(product_data$eoq.max)),round(const.fun(product_data$eoq.max))),c(round( obj.fun(copt_sol$solution)),round(const.fun(copt_sol$solution)))))
+colnames(const.unconst)<-c("Cost Function (€)","capacity(mm)")
+rownames(const.unconst)<-c("No Capacity","with Capacity")
+
+#kable(const.unconst,caption = "costs",format = "pandoc")
+const.unconst
+```
+
+
+# Joint Ordering (JO)
+
+
+
+```{r}
+n <- length(product_data$`box ID`)
+c.or0 <- cord
+c.or <- product_data$ordering_cost
+#H.vec <- 0.5 * dei * c.sh
+# based on the previous definition, I think this should be the vector of holding cost multipliers
+#holding cost rate is 10% of price of item, in this case box
+H.vec <- 0.1 * product_data$box_cost * dei * 0.5
+```
+
+
+## Objective Function with no capacity constraint
+
+--> an important side note is that the JRP is basically a quite standard EOQ problem which uses the substitution $T_i = \frac{q_i}{y_i}$, i.e., $q_i = T_i \cdot y_i$. Then, you substitute $T_i = m_i \cdot B$ ans result in the JRP (adding the common ordering cost).
+
+
+```{r}
+jrp.obj.fun <- function(m , B, cor, Hvec, cor0) cor0/B + sum(cor/B/m) + sum(Hvec*B*m)
+
+# calculate cycle times
+T.vec <- sqrt(c.or/H.vec)
+# order products
+reo.id <- order(T.vec)
+T.vec <- T.vec[reo.id]
+c.or <- c.or[reo.id]
+H.vec <- H.vec[reo.id]
+
+cost_cycle.mat <- t(cbind(c.or,H.vec,T.vec))
+costs.cycle <- data.frame(cost_cycle.mat)
+colnames(costs.cycle) <- reo.id 
+rownames(costs.cycle) <- c(  "$c_i^{or}$" ,"$H_i$","$T_i$" )
+kable(costs.cycle,"pandoc", row.names = T)
+#costs.cycle
+
+```
+
+
+
+
+```{r}
+
+# calculate T^2 and cumu. cost shares
+res.mat <- t(cbind(c.or/H.vec,(c.or0 + cumsum(c.or))/cumsum(H.vec)))
+df <- data.frame(res.mat)
+colnames(df) <- reo.id 
+rownames(df) <- c(  "$T_i^2$" ,"$T^C$"  )
+kable(df,"pandoc", row.names = T)#%>%
+  #scroll_box(width = "100%", height = "200px")
+```
+
+
+
+```{r}
+# identify break
+which(res.mat[1,] > res.mat[2,])# break occured after 13
+id.comb <- min(which(res.mat[1,] > res.mat[2,])) - 1 #3
+#id.comb
+# calculate B
+B <- min(T.vec) #0.01955164
+# solution with m - integers #######################
+m.vec.int <- round(T.vec/B,0)
+
+m.vec.int[1:id.comb] <- 1  
+# re-optimize B for fixed m.vec
+B.int <- sqrt(sum(c.or/m.vec.int)/sum(m.vec.int*H.vec))#0.02014868
+# total cost 
+c.cost.int <- jrp.obj.fun( m = m.vec.int, B=B.int, cor = c.or,Hvec=H.vec, cor0 = c.or0)#192606
+df <- data.frame(rbind(round(T.vec/B.int,2), round(T.vec/B.int), m.vec.int))
+colnames(df) <- reo.id 
+
+rownames(df) <- c("$m_i= {T_i}/{B}$" ,"$[m_i]$", "$[\\tilde{m}_i]$" )
+kable(df,"pandoc", row.names = T)
+```
+
+
+```{r}
+q.vec <- m.vec.int*B.int*dei
+dei <- dei[reo.id]
+df <- data.frame(rbind( m.vec.int, round(m.vec.int*B.int, 2), ceiling(q.vec) ))
+colnames(df) <- reo.id 
+rownames(df) <- c("$[\\tilde{m}_i]$", "$T_i$", "$q_i$" )
+kable(df,"pandoc", row.names = T)
+```
+
+
+
+```{r}
+#q.vec <- m.vec.int*B.int*dei
+#paste(round(c.cost.int)," is total cost with no capacity constraint")# 49943
+#const.fun(q.vec) > rack_total_width
+
+jrp.no_cap <- data.frame(round(c.cost.int),const.fun(ceiling(q.vec)))
+
+colnames(jrp.no_cap)<-c("Cost(€)","Capacity (mm)")
+rownames(jrp.no_cap)<-"Not constrained"
+
+kable(jrp.no_cap,digit=c(1,1),caption = "cost with no capacity constraint", format = "pandoc")
+```
+
+
+
+## Using T
+
+```{r}
+library(ROI)
+jrp.obj.fun2 <- function(Tvec, cor, Hvec, cor0) sum(cor0/Tvec) + sum(cor/Tvec) + sum(Hvec*Tvec)
+# you need to initialize the parameters in the objective function --> Tvec is to be optimized over, the rest is given
+jrp.obj.fun2 <- function(Tvec, cor=c.or, Hvec = H.vec, cor0 = c.or0) sum(cor0/Tvec) + sum(cor/Tvec) + sum(Hvec*Tvec)
+
+qopt2 <- OP(
+  objective = F_objective(F=jrp.obj.fun2 , n=62),
+  types = rep("C",n),
+  bounds = V_bound(ub= rep(30, 62), lb= rep(.001,62))
+) 
+
+#jrp.obj.fun2(m.vec.int*B)
+#jrp.obj.fun2(rep(.00001,62))
+#jrp.obj.fun2(rep(15,62))
+# you don't need Alabama here as there is no constraint. Basically you can also optimize this problem by taking derivatives
+copt_sol2 <- ROI_solve(qopt2, start = m.vec.int*B)
+#copt_sol2
+
+#copt_sol2$solution
+
+
+jrp.no_cap.cycleTime <- data.frame(round(copt_sol2$objval),const.fun(copt_sol2$solution*dei))
+
+colnames(jrp.no_cap.cycleTime)<-c("Cost(€)","Capacity (mm)")
+rownames(jrp.no_cap.cycleTime)<-"Not constrained"
+
+kable(jrp.no_cap.cycleTime,digit=c(1,1),caption = "cost with no capacity constraint using cycle Time", format = "pandoc")
+
+```
+
+
+
+
+
+## Including capacity constraint
+
+
+```{r}
+
+# we reinitialize the vectors
+n <- length(product_data$`box ID`)
+c.or0 <- cord
+c.or <- product_data$ordering_cost
+dei <- product_data$demand_per_year
+H.vec <- 0.1 * product_data$box_cost * dei * 0.5
+
+
+bnotsort <- product_data$b_not_sorting
+bsort <- product_data$b_sorting
+copt_sol.solution <- copt_sol$solution
+
+
+
+# calculate cycle times
+T.vec <- sqrt(c.or/H.vec)
+# order products
+reo.id <- order(T.vec)
+T.vec <- T.vec[reo.id]
+c.or <- c.or[reo.id]
+H.vec <- H.vec[reo.id]
+bnotsort <- bnotsort[reo.id]
+bsort <- bsort[reo.id]
+copt_sol.solution <- copt_sol.solution[reo.id]
+dei <- dei[reo.id]
+
+const.fun2 <- function(m, B = B.start, y= dei, bns = bnotsort, bs = bsort, rl = rack_length) {
+  sum(bs * ceiling( bns * m*B*y / rl))
+}
+
+T.feas <- copt_sol.solution/dei
+B.start <- min(T.feas)
+
+jrp.obj.fun <- function(m , B = B.start, cor = c.or, Hvec = H.vec, cor0 = c.or0) cor0/B + sum(cor/B/m) + sum(Hvec*B*m)
+#jrp.obj.fun(m= rep(1, 62))
+#const.fun2(m= rep(1, 62))
+
+qopt3 <- OP(
+  objective = F_objective(F=jrp.obj.fun ,n=n),
+  # now integer decision variables
+  types = rep("C",n),
+  bounds = V_bound(li = 1:n, ui = 1:n, ub= rep(50, n) , lb= rep(1, n)),
+  constraints = F_constraint(F=const.fun2,
+                             dir="<=",
+                             rhs = rack_total_width)
+)
+# Good starting point essential --> m = T.feas/B.start
+copt_sol3 <- ROI_solve(qopt3, start = T.feas/B.start , solver = "alabama")  # "deoptimr"
+
+#copt_sol3
+
+#copt_sol3$solution
+
+#jrp.obj.fun(m= copt_sol3$solution)
+#const.fun2(m= copt_sol3$solution) <= rack_total_width
+
+jrp.cap.m <- data.frame(round(copt_sol3$objval),const.fun2(m= copt_sol3$solution))
+
+colnames(jrp.cap.m)<-c("Cost(€)","Capacity (mm)")
+rownames(jrp.cap.m)<-"Capacitated"
+
+kable(jrp.cap.m,digit=c(1,1),caption = "cost with capacity constraint using Basic period approach", format = "pandoc")
+
+```
+
+```{r}
+m.start <- floor(copt_sol3$solution) # multiplier m
+q.start <- ceiling(m.start * B.start * dei)   # order quantity q (in boxes, rounded up)
+#q.start
+
+df2 <- data.frame(rbind( m.start, round(m.start*B.start, 2), ceiling(m.start*B.start*dei) ))
+colnames(df2) <- reo.id 
+rownames(df2) <- c("$[\\tilde{m}_i]$", "$T_i$", "$q_i$" )
+kable(df2,caption = "First 7 items in order before reordering","pandoc", row.names = T)
+
+
+df2<-df2[mixedorder(colnames(df2))]
+kable(df2,caption = "First 7 items in order After reordering","pandoc", row.names = T)
+q.start<- as.vector(df2[3,1:62])
+
+
+#kable(q.start,caption = "After reordering","pandoc", row.names = T)
+```
+
+
+
+
+
+# 1D Cutting Stock Problem
+
+```{r}
+
+```
+
+
+
+
+
+
+
+

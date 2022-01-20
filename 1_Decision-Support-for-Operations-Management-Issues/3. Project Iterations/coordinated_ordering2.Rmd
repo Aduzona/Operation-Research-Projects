@@ -1,0 +1,226 @@
+---
+title: "cooredinated_ordering2"
+author: "Group B"
+date: "30/05/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Coordinated Ordering
+
+1. Deterministic/continous Demand: The same amount of demand is there every instance of time and demand are met at every instance of time, thus no time varying demand
+
+2. Instantaneous replenishment: As soon as you place an order,  the item arrives. Lead time= 0
+
+3. No shortage: As soon as stock level on Y axis reaches 0, place an order for another quantity q. thus instanstaneous replenishment. 
+
+In the data set "Data_ordering.xlsx" parts are represented by material ID column.
+$i=$denotes part
+$i \in \mathcal I \qquad \{i_1,i_2,...,i_{62}\}, \space$
+$d_i=$ demand per day for part $i, \space$
+
+# data Extraction
+
+```{r}
+library("readxl")
+product_data <- read_excel("Data_ordering.xlsx",sheet = "product data")
+
+product_data
+```
+
+
+```{r}
+box_data <- read_excel("Data_ordering.xlsx",sheet = "box data")
+
+box_data
+Total_racks=8
+levels_per_rack=4
+rack_length= 6000
+rack_width=1750
+rack_height=300
+
+box_data$`box ID`
+
+```
+
+# Convert to Boxes
+Convert demand $d_i$, quantity $q_i$ and unit price$p_i$ all from part $i$ to box $bi$ which is the capacity of a box for part $i$ 
+
+$de_i=\frac {d_i}{b_i} \rightarrow$ Demand for box with part $i$
+$\mathcal pr_i= b_i \cdot p_i \rightarrow$ Price for box with material $i$
+$de_i = demand\_per\_year \space ,$
+$pr_i = box\_cost$
+```{r}
+#assuming there are 365 working days in a year
+#converting everything to boxes
+
+product_data$demand_per_year= ceiling((product_data$`demand per day` *365)/ product_data$`pieces/box`)
+
+product_data$box_cost= product_data$`pieces/box` * product_data$price
+
+product_data
+
+```
+
+Append Ordering cost for each item
+
+```{r}
+#box_data$`box ID`[1]
+order_cost <- double(length(product_data$`box ID`))
+
+  for(j in 1: length(box_data$`box ID`)){
+    for (k in 1:length(product_data$`box ID`)) {
+      if(box_data$`box ID`[j]==product_data$`box ID`[k]){
+        order_cost[k] <- box_data$`ordering cost (€)`[j]
+      }
+    }
+    
+  }
+
+product_data$ordering_cost <- order_cost 
+product_data
+
+```
+
+$c_i^{or}=$ ordering cost for part $i ,\space$
+
+$c_i^{sh}=$ stock holding cost rate based on unit price $p_i$ and interest rate $h, \qquad$.
+$c_i^{sh}=p_i \cdot h$
+
+## Separate Ordering (SO)
+calculate EOQ for each part i:
+$$ q_i^* = \sqrt \frac {2 \cdot de_i \cdot (c_i^{or}+c^{-or})} {pr_i \cdot h}$$
+
+
+```{r}
+#EOQ
+#dei= demand_per_year, cori= ordering cost for box i
+#cord= ordering cost, pri= box cost, h= interest rate
+so_eoq_fun <- function(dei,cori,cord,pri,h){
+  eoq<- sqrt((2*dei*(cori+cord))/(pri*h))
+  
+  return(eoq)
+}
+
+vec_so_eoq_fun <- Vectorize(so_eoq_fun(dei=product_data$demand_per_year,cori=product_data$ordering_cost,cord=1500,pri=product_data$box_cost,h=0.10))
+
+#Append Vector eoq to the table
+product_data$eoq <- ceiling(vec_so_eoq_fun)
+```
+
+$\frac {d_i}{q_i}=$ no of orders for part $i, \qquad$
+$\frac {q_i}{2}=$ average inventory for part $i$
+
+Note: In row 5 $MateiralID \rightarrow$7305673+76 has 16 pieces  in a box and row 8 $MateiralID->$7305819+79 has 6 pieces in a box , both has same $boxID \rightarrow$6203059 with $c_i^{or}= 80 €$
+
+$$ min \rightarrow (\sum_{i=1}^{n=62}c^{-or} + \sum_{i=1}^{n=62} \frac {de_i}{q_i} \cdot c_i^{or}) + (h \cdot \sum_{i=1}^{n=62} \frac {q_i}{2}\cdot pr_i ) $$
+
+```{r}
+
+#dei=product_data$demand_per_year,cori=product_data$ordering_cost,cord=1500,pri=product_data$box_cost,h=0.10
+
+so_obj_funct<-function(cord,cori,dei,eoq,h,pri){
+  
+  obj <- (62*cord)+(sum((dei/eoq)*cori))+ (h*sum((eoq/2)*pri))
+  return(obj)
+}
+
+so_obj_funct(1500,product_data$ordering_cost,product_data$demand_per_year,product_data$eoq,0.10,product_data$box_cost)
+
+```
+
+```{r}
+
+
+
+#library(kableExtra)
+#library(knitr)
+#df <- data.frame(Cat = c("box 1i", "box 2i"), 
+                 #part_j1 = linebreak(c("yes", "no")), 
+                 #part_j2 = linebreak(c("yes", "no")),
+                 #part_j3=linebreak(c("no","yes")),
+                 #part_jn= linebreak(c("no", "yes")))
+#kable(df, col.names = c("boxID vs MatID", "part_j1", "part_j2","part_j3","part_jn"), escape = F, caption = "parts each boxes can contain") %>%
+  #kable_styling(latex_options = "hold_position")
+
+```
+$b_{i}=$capacity of a box for part $i$ given in pieces
+$b_{j}=$ Size of box $j$
+$$b_{j}= box_{length} \times box_{width} \times box_{height}$$
+Assuming $q_i=50$ the number of boxes for part $i$ , if $de=12$ $\frac {q_i}{de_i}= \frac {50}{12}=4.16=4$ it takes 4 days for another other to be placed. 
+
+# Optimum Ordering constraint
+
+$$q_i=Number \space boxes \space ordered  \\ 
+de_i=Number \space boxes \space demanded \\
+T= \frac {q_i}{de_i}=TimeCycle$$   
+Constraint:
+$$q_i -  {de_i} \cdot T \le 0 \qquad \qquad \qquad(1)$$
+# Rack Length or one runway constraint
+
+
+$n_k=$Number of boxes in a runway $k$ with box ID $j$ for part $i\\$:
+E.g: box ID 3103147 has a width of 198 but Rack length is 6000,
+maximum number of box 3103147 in runway is $n_k= \frac {6000}{297}=20.20=20 \space boxes\\$
+
+$$ n_{k}=\frac {rack_{length}}{b_{ji\space length}} \\ $$
+$x_{i}=$ lets say that there are 720 boxes with id 3103147 containing part i Mat ID(7346592+72), the first 30 boxes are assigned to runway $k_1 \qquad$ 
+
+$q_{ik}=$ number of boxes ordered for part $i$ in runway $k, \qquad$ $b_{ji\space length}$ is the length of box id $j$ containing part $i,\space \\$
+
+
+$$\sum_{i \in \mathcal I } q_{ik} \cdot b_{ji\space length} \le rack_{length} \qquad \forall k \in \mathcal K $$
+# Rack Width
+
+Collapsing Rack 4 levels in a rack and joining the 8 racks to become 1 level.
+
+Total rack width available: 
+$rack_{total_{Width}}=(rack_{width} \times 4 \times 8) \rightarrow$
+Sum of number of parts $i$ is equal to box size for part $i$.
+
+$$\sum_{k \in \mathcal K } q_{km} \cdot b_{ji\space width} \le rack_{total_{Width}}$$
+
+
+## Joint Ordering(JO)
+
+Remember each time we order an Item we incur an ordering cost $c^{-or}$ of 1500 € for each of the 62 items.
+
+$c^{jo}=$Joint ordering cost
+$$c^{jo}=c^{-or} + \sum_{i=1}^{m=62}  c_i^{or}$$
+Let $n=\frac {de}{q}=$ order frequency
+
+Order Frequency:
+$$n^*=\sqrt (h \cdot \frac  {\sum_{i=1}^{m=62} \cdot de_i \cdot pr_i}{2 \cdot c^{jo}}) $$
+Therefore Ordering cost is $c^{jo} \cdot n$
+
+$holding \_ cost \rightarrow \frac {q}{2} \cdot h \cdot pr \rightarrow \frac {de}{2n} \cdot h \cdot pr $
+
+$$min \rightarrow c^{jo} \cdot n + \sum_{i=1}^{m=62} \frac {de_i}{2n} \cdot h \cdot pr_i   $$
+
+$$q_i = \frac {de_i}{n^*} $$
+
+# Joint Ordering 2(JO2)
+$de_i=Number \space of \space boxes \space demanded \space for \space item \space i \\$
+
+
+$q_i^*=EOQ \space for \space box \space with \space  item \space i \\$
+$$ q_i^* = \sqrt \frac {2 \cdot de_i \cdot c_i^{or}} {pr_i \cdot h}$$
+
+$$ \frac {de_i}{q_i}=Order\space frequency \space for \space item \space i$$
+$k= \{ \frac {de_1}{q_1},...,\frac {de_n}{q_n} \}$ number of unique ordering frequency 
+
+e.g there are 62 items out of which 8 unique ordering frequency that is item 1 and item 7 can have the same ordering frequency.
+
+$$ min \rightarrow \sum_{i=1}^{m=62} \frac {q_i}{2} \cdot h \cdot pr_i + \sum_{i=1}^{m=k} \frac {de_i}{q_i}\cdot c^{-or} +\sum_{i=1}^{m=62} de_i \cdot c_i^{or} $$
+```{r}
+
+```
+
+
+```{r pressure, echo=FALSE}
+
+```
+

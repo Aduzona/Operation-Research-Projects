@@ -1,0 +1,189 @@
+---
+title: "EDA_Biathlon.Rmd"
+author: "Group_B"
+date: "10/05/2020"
+output: html_document
+---
+
+# Task
+
+Compose a report with a descriptive analysis of the data. Investigate which variables affect the skiing speed of the athletes. Use basic statistics as well as appropriate plots to illustrate the effects of environmental conditions or course profiles on skiing speed. 
+
+# Read data 
+
+At first read the data set into the workspace either via the console or the "import dataset" dialog in environment menu (right upper pane). 
+
+#Extract Data
+```{r setup, include=FALSE}
+dat <- read.csv("exercise_case_study/biathlon_results_women.csv")
+str(dat)
+```
+
+## Data Types
+$ Factors: 11$,$int: 4$, $num: 9$ 
+
+```{r cars}
+summary(dat)
+```
+
+#Date and Season
+
+#Season
+```{r pressure, echo=FALSE}
+ggplot2::qplot(data=dat, x=season)
+```
+
+Plot season against date.:
+```{r}
+library(ggplot2)
+ggplot2::ggplot(aes(x=date,y=season),data=dat)+geom_point()
+```
+#Season vs date
+Check for unique values
+```{r}
+cor.test(as.numeric(dat$date),as.numeric(dat$season),method = "spearman")
+```
+There is high correlation between date and season
+Though to this, i will use season to check its relation with speed.
+
+```{r}
+length(unique(dat$date)) #254 unique dates 
+length(unique(dat$season))#10 unique season
+```
+#Season data grouping
+```{r}
+library(dplyr)
+season_data <- function(){
+  dat%>%
+    group_by(season)%>%
+    arrange(season)
+}
+ggplot(aes(x=season,y=speed),data=season_data())+geom_line()
+```
+
+#Speed vs season
+```{r}
+cor.test(as.numeric(dat$season), dat$speed)
+```
+season does't affect speed.
+#speed vs age
+```{r}
+speed_age <- function(){
+  dat%>%
+    group_by(speed)%>%
+    summarise(age_mean=round(mean(age)),
+            age_median=round(median(age),),
+            speed_mean=round(mean(speed),0.5),
+            n=n())%>%
+    arrange(speed_mean)
+}
+speed_age()
+ggplot(aes(x=age_mean,y=speed_mean),data=speed_age())+geom_line()
+```
+As seen in the above graph, the prime speed is between 22 and 38 years.
+
+```{r}
+cor.test(speed_age()$age_mean, speed_age()$speed_mean)
+```
+positive correlation between speed and age.
+now split into ranges.
+# we will choose age between 22 and 38 as affecting speed most
+
+##speed vs rank
+```{r}
+rank_data <- function(){
+  cor.test(dat$rank,dat$speed)
+  qplot(dat$rank,dat$speed)
+}
+
+```
+Higer speed is better, means you run faster,
+lower rank is beteer, means you are ranked higher, like 1 being the highest.
+
+this is the reason for the high negative correlation of -0.45
+
+#course.rank vs speed
+```{r}
+course.rank_data <-function(){
+  cor.test(dat$course.rank,dat$speed)
+}
+```
+course rank has higher effect on speed than rank. with a correlation of -0.54 meaning the person ranked 1st in course rank will have higher speed.
+
+Faster people are ranked higher, thus negative correlation.
+#country vs speed
+nation variable has 42 levels meaning 42 different countries.
+```{r}
+country_data <-function(){
+  dat%>%
+    group_by(nation)%>%
+    summarise(speed_mean=mean(speed),
+            speed_median=mean(speed))%>%
+    arrange(speed_mean)
+    
+}
+country_data()
+```
+Germany (GER) has the highest speed will TUR has the lowest speed.
+```{r}
+ggplot(aes(x=nation,y=speed_mean),data=country_data())+geom_point()
+cor.test(as.numeric(country_data()$nation),country_data()$speed_mean)
+```
+This shows that country has little effect on speed though coming to a country with higher speed average increases your chances of speed improvement marginally. 
+
+#snow.condition
+```{r}
+snow.condition_data <-function(){
+  dat%>%
+    group_by(snow.conditions)%>%
+    summarise(speed_mean=mean(speed),
+            speed_median=mean(speed))%>%
+    arrange(speed_mean)
+    
+   
+}
+snow.condition_data()
+```
+We need to make more adjustment to the data as  a some values are written differently.
+we can use mutate method in dyplr to mearge the values.
+#
+```{r}
+cor.test(as.numeric(dat$snow.conditions),dat$speed)
+```
+'plot snow condition
+```{r}
+ggplot(aes(x=snow.conditions,y=speed),data=dat)+geom_line()
+#this shows some seasonality
+
+```
+#comparing Snow condition, air.temperature, speed,snow.temperature.
+```{r}
+four_var_data <-function(){
+  ggplot(data=dat,mapping=aes(x=snow.temperature,y=speed),color=
+         snow.conditions)+geom_point(mapping=aes(color=air.temperature))+geom_smooth(method = "lm")
+                                       
+                            
+   
+}
+four_var_data()
+```
+As seen from the data above, Increase in temperature results to increase in speed but also variability also increases. also higher air temperature has positive correlation with high snow temperature.
+
+you need air temperature and snow temperature to increase to about 0 degrees for higher speed but this can also result in low speed.
+
+#Weather condition, speed, age
+```{r}
+weather_age_speed <- function(){
+  ggplot(data=dat, aes(x=age,y=speed))+geom_point(aes(color= air.temperature))+ geom_smooth(method = "lm")+facet_wrap(~weather.conditions)+labs(x="age",y="Speed")
+}
+weather_age_speed()
+```
+
+#Correlation
+```{r}
+cor(dat[,c("snow.temperature","air.temperature","fails.total","age","speed","rank","course.rank","elevation","max.climb", "tot.time","total.climb","course.time")])
+```
+```{r}
+cor.test(as.numeric(dat$weather.conditions),dat$speed)
+```
+

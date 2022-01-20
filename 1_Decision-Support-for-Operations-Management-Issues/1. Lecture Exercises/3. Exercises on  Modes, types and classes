@@ -1,0 +1,99 @@
+---
+title: "Exercises Data Science with R"
+author: "Dr Thomas Kirschstein and Diego Uchendu "
+output: html_notebook
+---
+
+# Chapter 3
+
+Basics on data types and data manipulation
+
+1. Calculate the outer product of two vectors (without outer())
+
+```{r}
+x <- 1:5
+y <- 10:6
+
+#conver the 2 vectors to matrix
+as.matrix(x) %*% t(as.matrix(y))
+#same as outer(x,y)
+```
+
+2. Define a function that calculates the trace of a matrix.
+what is a trace of a matrix? Is the summation of diagonals of a matrix.
+
+If Matrix A, 3 by 3 matrix tr[A]= a11 +a22+ a33
+
+```{r}
+trace_func <- function(z){
+  # calculates trace of z
+  # z...matrix
+  sum(diag(z))
+}
+#randomly generates 9 numbers that are normally  distributed
+tmp <- rnorm(9)
+A <- matrix(tmp, ncol = 3, byrow = T)
+trace_func(A)
+```
+3. Create a vector containing the first 100 Fibonacci numbers.
+Most commonly, the Fibonacci numbers are defined recursively by $F_n=F_{n-1}+F_{n-2}$  whereby $F_0 =0$ and $F_1=1$. However, there is also an explicit formulation: $F_n = \sum_{k=0}^{\lfloor \frac{n-1}{2} \rfloor} \binom{n-k-1}{k}$
+
+$choose() == C_k^{n-k-1}$
+```{r}
+fib_num_fun <- function(n){
+  #calculate nth Fibonacci number
+  #n...number
+  
+  #remember k.vec is a vector
+  k.vec <- 0:floor((n-1)/2)
+  sum(choose(n-k.vec-1,k.vec))
+}
+#vectorize fib_num_fun such that it accepts input vectors
+vfib_num_fun <- Vectorize(fib_num_fun)
+
+#doesn't work
+fib_num_fun(1:10)
+
+#works
+vfib_num_fun(1:10)
+```
+
+4. Create a matrix containing the all binominal coefficients up to n = 50
+```{r}
+x <- 1:10
+y <- 1:10
+pas <- outer(x,y,choose)
+```
+
+5. Preference matrices in the Analytical Hierachy Process (AHP) show a form of (inverted) symmetry. How can you check this in R?
+
+The AHP method requires for a matrix $A=\{a_{ij}|i,j=1,...,n\}$ that $a_{i,j} =\frac{1}{a_{j,i}}$.Thereby, diagonal elements are always 1 (i.e., $a_{ii} = 1$) https://www.youtube.com/watch?v=J4T70o8gjlk&t=185s 
+```{r}
+#create 3x3 matrix
+A <- matrix(sample(1:10, 9),ncol=3)
+#set all diagonals matrix A to 1
+diag(A) <- 1
+#checks matrix elementwise
+A== t(1/A) #-> problem double counting of elements.
+#Alternative:compare just elements of triangle sub-matrices
+A[lower.tri(A)]== 1/A[upper.tri(A)]
+```
+```{r}
+```
+6. Calculate the synthesis of an AHP preference matrix
+
+The synthesis is calculated in two steps: 
+(a) normalizing $A$ by dividing with column sums
+(b) calculate row means of normalized matrix 
+
+```{r}
+# convert A (chunk before) into a consistent matrix
+A[lower.tri(A)] <- 1/A[upper.tri(A)]
+#now a preference matrix
+A
+# step (a) of synthesis
+dev <- colSums(A) # calculate colSums
+A.prime <-t(t(A)/dev)# Alternative a: using that R divides columnwise
+A.prime <- A %*% diag(1 / dev)# Alternative b: use matrix calculation
+rowMeans(A.prime)
+```

@@ -1,0 +1,282 @@
+---
+title: "7. Exercise_Optimization_in_R"
+author: "Diego Uchendu"
+date: "16/05/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+##Exercise 1: 
+Formulate the Steiner-Weber model with Euclidean distance and solve it with optim()
+
+$$min_{(u,v)\in R^2} \Rightarrow \sum_{i\in \zeta} (a_i \times \sqrt{(x_i -u)^2+(y_i-v)^2} \space )$$
+
+```{r}
+loc.Eucl <- function(loc, a,x,y) sum(a * sqrt((x-loc[1])^2+ (y-loc[2])^2))
+n <- 10
+a.vec <- sample(1:100, size = n)    # sample weights for each point/customer
+x.vec <- rnorm(n)                   # sample x coordinates
+y.vec <- rnorm(n)                   # sample y coordinates
+
+res <- optim(par = c(0,0), fn = loc.Eucl, method = "BFGS", a = a.vec, x = x.vec , y= y.vec)
+res
+```
+
+Substitute optimium location and values in objective function.
+```{r}
+#using optimum location That is the minimized points
+loc= c(0.4130981,0.7379508) #(u,v)
+loc.Eucl(loc, a.vec,x.vec,y.vec) # value 463.8937
+```
+
+# plotting Steiner Model
+
+```{r}
+library(grDevices)        # package for generating color gradients
+# generate grid of potential locations
+emat <- expand.grid(seq(-3,3, length.out = 100), seq(-3,3, length.out = 100))
+# list with grid point coordinates 
+plist <- list(x = seq(-3,3, length.out = 100), y = seq(-3,3, length.out = 100))
+# evaluate objective function at each potential location
+z.vec <- apply(emat, 1, function(x) loc.Eucl(x, a = a.vec, x = x.vec, y = y.vec))
+# generate color vector --> assigns a color between green and red depending on the objective value
+col.vec <- colorRamp(c("green","orange","red"))( (z.vec-min(z.vec))/(max(z.vec)) )
+# recode color vector to RGB code
+col.vec <- rgb(col.vec[,1],col.vec[,2],col.vec[,3], maxColorValue = 255)
+# create plot
+par(mar =c(4,4,0.3,0.3))
+plot(emat, xlim=c(-3,3), ylim=c(-3,3), xlab="x", ylab="y", col = col.vec, pch = 15, asp = 1, xaxs = "i", yaxs = "i", cex = 1.5)
+points(x.vec, y.vec, pch =20 , cex = log(a.vec)/2)
+points(rbind(res$par,res$par), pch =17 , cex = 2, col="blue")
+contour(plist, z= matrix(z.vec, ncol=100) , add= TRUE)
+legend("topleft", bty="n", legend=c("customer","center"), col=c("black","blue"), pch = c(20,17), bg = "yellow", cex = 1.5)
+```
+
+## Exercise 2:
+
+Formulate the Newsvendor model and use optim() to find the optimal order quantity. Compare the optimal solution found by optim() with the theoretical optimum.
+
+The total cost in the normal newsvendor model is given by
+$$Z(q)= (c_u + c_o)\times σ \times(φ(q')+q'\times Φ (q'))-c_u \times(q-\mu)$$
+with $$q' =\frac{(q-μ)}σ$$ 
+Find q while minimizing z
+$Z(q)$ =  total cost 
+$q$ = order quantity 
+$cu$ = Underage cost, cost of losing profit.
+$co$ = Overage cost, cost of over ordering.
+$\mu$= Mean demand
+```{r}
+newsven_obj_fun <- function(x, cu,co,mu,sigma){
+  q.prime <- (x-mu)/sigma
+         (cu + co) * sigma * (dnorm(q.prime) + q.prime * pnorm(q.prime)) - cu * sigma * q.prime
+
+}
+#n <- 100
+#q.vec <- seq(110, 125, length.out = n) # x axis
+#cost.vec <- newsven_obj_fun(x=q.vec, mu = 100, cu=2, co= 0.5, sigma = 20) #yaxis
+?optim
+min.cost.vec<-optim(par = 1,fn=newsven_obj_fun, "BFGS",mu = 100, cu=2, co= 0.5, sigma = 20 )
+
+min.cost.vec
+```
+
+# Exercise 3:
+
+Add an inventory capacity constrint to the Wagner-Whitin model and resolve it with Rglpk.
+
+
+$$l_t  \le cap \qquad \forall t \in T$$ 
+M= sum of demand
+```{r}
+library(Rglpk)     
+# assign names to decision vector
+n <- 6                              # number of periods
+co <- 50                            # ordering cost rate
+ch <- 0.1                           # holding cost rate
+d.vec <- round(rnorm(n, mean = 100, sd = 20))   # sample demand
+bigM <- sum(d.vec)                  # set big M
+x.vec <- numeric(3*n + 1)           # initialize decision variables
+# right-hand side vector with 200 units inventory capacity
+b.vec <- c(d.vec, rep(0, n + 2), rep(200, n) )  
+# objective coefficients 
+c.vec <- c(rep(ch, n+1), rep(0, n), rep(co, n))
+# vector with constraint directions 
+const.vec <- c(rep("==", n), rep("<=", n) , rep("==", 2), rep("<=", n) )
+# vector with variable types
+vtype.vec <- c(rep("C",n + 1), rep("C",n), rep("B",n)) 
+# initialize constraint matrix
+A.mat <- matrix(0, ncol = 3*n + 1, nrow = 3*n+2)    
+# write coefficient in first n rows (inventory constraints)
+for(i in 1:n){
+  A.mat[i,i]   <- 1         # coefficient for l_{t-1}
+  A.mat[i,i+1] <- -1        # coefficient for l_{t}
+  A.mat[i,n + 1 + i] <- 1   # coefficient for q_{t}
+}
+# write coefficient in rows (n+1):(2*n) (ordering constraints)
+for(i in (n+1):(2*n)){
+  A.mat[i,i+1] <- 1             # coefficient for q_{t}
+  A.mat[i,n + 1 + i] <- -bigM   # coefficient for y_{t}
+}
+# write coefficient in last two rows (inventory initialization)
+A.mat[nrow(A.mat)-n-1,1] <- 1    # coefficient for i_{0}
+A.mat[nrow(A.mat)-n,n+1] <- 1    # coefficient for i_{T}
+# add inventory constraints
+for(i in 1:n){
+  A.mat[nrow(A.mat)-n+i, i+1] <- 1
+}
+# solve MILP
+sol <- Rglpk_solve_LP(obj = c.vec, mat = A.mat, dir = const.vec, rhs = b.vec, types = vtype.vec)
+# list with solution and demand
+list( l = sol$solution[1:(n+1)],         # inventory levels
+        q = sol$solution[(n+2):(2*n+1)],   # order quantities
+        y = tail(sol$solution, n),         # order indicators
+        d = d.vec )                        # demand
+# optimum
+sol$optimum
+```
+4. Solve the Transshipment Problem with `Rglpk`:
+$$ \min\limits_{x_{ij}} \rightarrow \sum_{i \in \mathcal{V}_a }\sum_{j \in \mathcal{V}_t } c_{ij} \cdot x_{ij} + \sum_{j \in \mathcal{V}_t }\sum_{k \in \mathcal{V}_b } c_{jk} \cdot x_{jk}  $$
+
+$$ \sum_{j \in \mathcal V_t} x_{i,j} \le  a_i \qquad \forall i \in  \mathcal V_a \\ \sum_{j \in \mathcal V_t} x_{j,k} \ge  b_k \qquad  \forall k \in \mathcal V_b  \\ \sum_{i \in \mathcal V_a} x_{ij} = \sum_{k \in \mathcal V_b} x_{x_{jk}} \qquad \forall j \in \mathcal V_t \\ x_{ij} \ge 0$$
+
+where $a_i$ is the maximum supply capacity of node $i \in \mathcal{V}_a$, $b_k$ denotes the demand of node $j \in \mathcal{V}_b$, $c_{ij/jk}$ are transport cost rates and $x_{ij/jk}$ are shipment quantities. 
+```{r}
+n.a<- 4  #number sources
+n.b <- 5 # number sinks
+n.t <- 3 #number terminals
+
+nam.A <- paste("A",1:n.a, sep = "") # "A1" "A2" "A3" "A4"
+nam.B <- paste("B",1:n.b, sep = "") # "B1" "B2" "B3" "B4" "B5"
+nam.T <- paste("T",1:n.t, sep = "") #  "T1" "T2" "T3"
+# sample demand & supply
+
+repeat{
+  d.vec <- round(runif(n.b, min = 100, max = 200)) # 5 demand values from B nodes
+  s.vec <- round(runif(n.a, min = 150, max = 250)) # 4 supply values from A nodes
+  #check for sufficient supply
+  if(sum(d.vec) < sum(s.vec)) break
+}
+d.vec # 5 vector values uniformly distributed
+s.vec # 4 vector values uniformly distributed
+#sample distances
+## sources-terminals
+d.a.t <- round(runif(n.a*n.t, min = 1, max = 50))
+d.a.t # 12 vector values representing quantity from i to j
+## terminals-sinks
+d.t.b <- round(runif(n.b*n.t, min = 1, max = 30))
+d.t.b # 15 vector  values quantitites from j to k(Xjk)
+# initialize decision variables
+x.vec <- numeric(n.a*n.t + n.b*n.t)
+x.vec # 12+15 =27 spaces
+# right- hand side vector
+?rep()
+b.vec <- c(s.vec, d.vec, rep(0, n.t))
+b.vec #12 elements in the vector
+
+#objective coefficients
+c.vec <- c(d.a.t, d.t.b)
+c.vec# 27 elements in the vector
+
+# vector with constraint directions 
+const.vec <- c(rep("<=", n.a), rep(">=", n.b) , rep("==", n.t) )
+const.vec
+# vector with variable types
+vtype.vec <- rep("C", length(x.vec))
+vtype.vec
+# contraint matrix A
+
+```
+```{r}
+#A Contraint matrix A
+A.mat <- matrix(0, ncol = length(x.vec), nrow = n.a + n.b + n.t)
+A.mat
+
+# use variable names
+colnames(A.mat) <- c(
+  apply(expand.grid(nam.A, nam.T), 1, paste, collapse="-"),
+  apply(expand.grid(nam.T, nam.B), 1, paste, collapse="-")
+)
+A.mat # the columns are directions 
+```
+
+
+```{r}
+# iteratively add constraints via name matching
+# supply constraints
+
+
+```
+
+#Exercise 5: 
+Change the problem by adding constraints that prohibit the center to be closer than 0.5 distance units to any point
+```{r}
+
+#solver for non linear, generally contrained programs
+library(ROI.plugin.alabama)
+
+n <- 100
+
+#sample weights for each point/customer
+a.vec <- sample(1:100, size = n)
+
+#sample x coordinates
+x.vec <- rnorm(n)
+
+#sample y coordinates
+y.vec <- rnorm(n)
+
+#Set up optimization program
+#bounds loc[1]= [-Inf,Inf], loc[2]=[-Inf,Inf] thus the rep(Inf,2) range values for x axis of both loc[1] and loc[2], rep(-Inf,2) range values for y axis of both loc[1] and loc[2]
+copt <- OP(
+  objective =  F_objective(F=function(loc) sum(a.vec * (abs(x.vec - loc[1]) + abs(y.vec - loc[2]) ) ), n = 2),
+  types = rep("C", 2),
+  bounds = V_bound(ub = rep(Inf, 2), lb = rep(-Inf, 2)),
+  constraints = F_constraint(
+    F= function(loc) sum(a.vec * (abs(x.vec - loc[1]) + abs(y.vec - loc[2]) ) ),
+    dir = ">=",
+    rhs = 0.5)
+  
+)
+#solve the problem
+sol.cnst <- ROI_solve(copt, start=c(0,0),solver = "alabama")
+
+#obtain solution
+sol <- sol.cnst$solution 
+sol # 0.13521671 0.02257355
+
+#objective value
+sol.cnst$objval #8717.349
+#remember x.vec is a vector this returns the minimum values 
+min(abs(x.vec-sol[1])+ abs(y.vec - sol[2]))# 0.214452
+
+#unconstrined solution
+constraints(copt) <- NULL
+sol.uncnst <- ROI_solve(copt, start=c(0,0))
+sol.uncnst# No optimal solution found. The solver message was: No solution. The objective value is: 8.717352e+03
+
+sol.uncnst$objval#8717.352
+sol.uncnst$solution#  0.13640996 0.02257363
+#compare objective values
+sol.cnst$objval - sol.uncnst$objval #-0.002384161
+
+#compare solutions
+rbind(sol.cnst$solution, sol.uncnst$solution)
+
+#plot solutions
+{plot(x.vec, y.vec, xlab="x", ylab="y", cex = log(a.vec)/4, pch=16, ylim=c(-3,3), xlim=c(-3,3)) 
+points(rbind(sol.cnst$solution,sol.cnst$solution), col="blue", cex=2, pch =15)
+points(rbind(sol.uncnst$solution,sol.uncnst$solution), col="red", cex=2, pch =17)
+legend("topleft", pch=c(15,17), col=c("blue","red"), legend=c("constrained opt.","unconstrained opt."))
+}
+```
+# Exercise 6:
+Formulate the Newsvendor model with $\beta$ service level restriction with the `ROI` framework.
+```{r}
+
+```
+#Exercise 7:
+

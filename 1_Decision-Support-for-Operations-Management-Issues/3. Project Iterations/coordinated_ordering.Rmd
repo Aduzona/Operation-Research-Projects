@@ -1,0 +1,66 @@
+---
+title: "Coordinated Ordering"
+author: "Diego Uchendu"
+date: "20/05/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Synchronized lot sizing with capacity constraints
+
+##  Task:
+Determine a lot sizing model that determines lot sizes for each part such that rack capacity contraints are adhered to and total cost per period for stock holding and ordering capacity are minimal. Assume an interest rate of $h=10\%$ and overall odering cost of $c^{-or}=1500\space€.$ All other data are summarized in the file "Data_ordering.xlsx".
+
+Each flow racks consists of 4 levels and multiple runways per level
+$$ i \in \mathcal I \qquad denotes \space set \space of \space part$$
+
+$$\min_{l_{it}, q_{it},y_{it}} \rightarrow\sum_{i\in \mathcal I} \sum_{t\in T} c_{i}^{sh} \cdot l_{it} + \sum_{i\in \mathcal I} \sum_{t\in T} c_{i}^{or} \cdot y_{it}   $$
+subject to $$ $$
+$$l_{it-1}-l_{it}+q_{it}=d_{it} $$
+$$q_{it}-d_{it} \cdot y_{it} \le 0 $$
+$$\sum_{i=1}^n bw_i  \le rack_{width} \qquad  bw= box \space width$$
+$$\sum_{j=1}^n blen_{ij}  \le rack_{length} \qquad  blen=box \space length\\ n= \frac {rack_{length}}{blen_i}\\ j=counter \space for \space blen_i $$
+$c_i^{or}=$ ordering cost for $p_i$ must be paid when ordering.
+
+$c^{-or}=$ oVerall ordering cost.
+
+oVerall ordering cost charged every time at least one order is placed.
+$$y_t \cdot c^{-or} \ge 0 \qquad $$
+
+$$y \in \{0,1\} \qquad y=0, not \space ordered\\y=1, ordered$$
+$$q_{it},l_{it} \ge 0 $$
+1_rack = 4 levels.
+$$4 \cdot l=rack_i  $$
+
+$c_i^{sh}=p_i \cdot h$ Indicates the stock holding cost rate based on unit price $p_i$ and interest rate $h$.
+
+
+All parts can be ordered from one supplier and only complete boxes can be ordered.
+
+$bw_i=$ box width for part i. aim to fulfill:
+1. multiple runways per level
+2. The total number of runways per level depends on the assigned parts and is limited by the total width of the rack.
+This also supports:
+3. the width of a runway can be adapted to the width of the box type (rww= runway width, bw= box width)
+$$rww_j= bw_i$$ 
+4. Each part is stored in one particular box type only.
+$$ \sum_{i=1}^n P_i = b_i \qquad b_i=box \space capacity\space for \space part \space i\\ n=b_i$$
+For $blen_j$:
+1. In each runway, only one part should be stored
+$$rw_j=b_i$$
+Note: there are 4 levels and 8 racks
+
+$rack_{cap}= rack_{length} \times rack_{width} \times 4  \times 8$ in cubic mm
+
+
+
+
+
+$$\sum_{i=1}^n \frac {q_i}{2} \cdot b_j = rack_{cap}$$
+```{r}
+
+```
+

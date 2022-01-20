@@ -1,0 +1,441 @@
+---
+title: "Optimization in R"
+author: "Diego Uchendu"
+date: "13/05/2020"
+output: html_document
+---
+# CHAPTER 7 Optimization in R
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#install.packages("polynom")
+library(polynom)
+?polynomial
+#install.packages("gradDescent")
+library(gradDescent)
+#install.packages("optimx")
+library(optimx)
+```
+
+## 7.1 Continuous optimization with optim
+
+For unconstrained (or at most box-constraint) general prupose optimization, R offers the built-in function optim() which is extended by the optimx() function. The syntax of both functions is identical: optim(par = <initial parameter>, fn = <obj. function>, method = <opt. routine>). The first argument of the function to be optimized must be the vector (or scalar) to be optimized over and should return a scalar (i.e. the objective value). Some optimization routines also allow Inf or NA as returned values, but some require finite values always. Additionally, upper and lower values for the parameters can be set by option lower = <vector of lower bounds> and upper = <vector of upper bounds>. In this case, method = "L-BFGS-B" must be selected. By default, optim() and optimx() minimize the objective function.
+
+Values of $optim\\$
+$par$ = The best set of parameters found
+$value$= The value of $fn$ corresponding to $par$.
+$convergience$= 0 means result found
+```{r cars}
+# one-dimensional optimization
+fn.poly <- function(x) 0.01 * x^3 + 2* x^2 +1* x +4 #define a polynomial function
+#x= -0.2504697   using BFGS method
+fn.poly(-0.2504697)# value= 3.874843
+```
+
+
+```{r}
+#par= Initial values for the parameters to be optimized over
+optim(par = 1, fn = fn.poly, method = "BFGS")#one result list
+optimx(par=1,fn = fn.poly, method = c("Brent", "CG", "BFGS", "bobyqa", "nlm"))# and comparison of alternative methods
+```
+
+
+2 dimensional optimization, the continous location planning problem with Manhattan metric:
+
+$$min_{(u,v)\in R^2} \Rightarrow \sum_{i\in \zeta} a_i \times(|x_i -u|+|y_i-v|)$$
+The weighted Manhattan distance function introduced before also handles vectors. So, we need to adapt this function only slightly:
+find: $(u,v)$ which is the optimum location from points $(x_i,y_i)$ given corresponding weights $a_i$
+$loc=(u,v), where \space loc[1]=u \space and \space loc[2]=v$
+```{r}
+loc.mh <- function(loc, a,x,y) sum(a * (abs(x - loc[1]) + abs(y - loc[2]) ))
+n <- 100
+a.vec <- sample(1:100, size = n) # sample weights for each point/customer
+x.vec <- rnorm(n) #sample x coordinates
+y.vec <- rnorm(n)  #sample y coordinates
+res <- optim(par = c(0,0),fn= loc.mh, method = "BFGS", a= a.vec, x=x.vec, y=y.vec) # optimal location should be close to (0,0) also par
+res
+```
+
+Example:
+```{r}
+#using optimum location That is the minimized points
+loc= c(0.07058603,-0.17374136) #(u,v)
+loc.mh(loc, a.vec,x.vec,y.vec) # value 7925.303
+
+
+```
+
+The corresponding solution can de plotted as follows (sizes of customer points are proportional to their weights  
+$a_i$).
+```{r}
+library(grDevices) # package for generating color gradients
+
+#generate grid of potential locations
+#or grid of (u,v) 10,000 rows of (u,v)
+emat <- expand.grid(seq(-3,3,length.out = 100),seq(-3,3,length.out = 100))
+
+emat #2 column, 10,000 rows shows var1(-3,3) in each var2(-3,3)
+is.data.frame(emat) #True
+#list with grid point coordinates
+plist <- list(x=seq(-3,3, length.out = 100), y=seq(-3,3, length.out = 100))
+
+plist #was this necessary?(x,y) thats 100 points
+
+
+#evaluate objective function at each potential location
+z.vec <- apply(emat,1, function(x) loc.mh(x, a = a.vec, x = x.vec, y = y.vec))
+#the first x  represents u,v
+#z.vec has list of  (z(u,v)'s or Loc[1] and Loc[2] given a.vec, x.vec and y.vec
+
+# generate color vector --> assigns a color between green and red depending on the objective value
+
+?colorRamp
+col.vec <- colorRamp(c("green","orange","red"))((z.vec-min(z.vec))/(max(z.vec)))
+
+?rgb
+#recode color vector to RGB code
+col.vec <- rgb(col.vec[,1],col.vec[,2],col.vec[,3], maxColorValue = 255)
+
+#create plot
+par(mar=c(4,4,0.3,0.3))
+#remember emat is (u,v)'s
+
+plot(emat, xlim=c(-3,3),ylim=c(-3,3),xlab="x",ylab="y",col= col.vec,pch=15,asp=1,xaxs = "i", yaxs = "i", cex = 1.5)
+
+#points of known customer's 100 location (x.vec,y.vec)
+?rbind#rowise binding of (x.vec,y.vec) forming a matrix
+#mat <- rbind(x.vec,y.vec)
+#is.matrix(mat)#TRUE
+#pch= 20 gives black points
+?points
+#cex A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default.
+#i think cex can be the reason for different shapes in the points,with larger points representing higher demand
+points(x.vec, y.vec, pch =20 , cex = log(a.vec)/2)
+
+#remember the optimum objective function res=z(u,v)
+#res= 7925.303
+?par
+
+#mar  A numerical vector of the form c(bottom, left, top, right) which gives the number of lines of margin to be specified on the four sides of the plot. The default is c(5, 4, 4, 2) + 0.1.
+
+#the optimum point res is given the color blue
+
+#does 
+res.parr <- rbind(res$par,res$par) 
+#res$parr shows 2 by 2 matrix of, this helps to place the point in the graph
+points(rbind(res$par,res$par), pch =17 , cex = 2, col="blue")
+
+?contour
+#plist locations of grid lines at which the values in z.vec(optimum point) are measured
+#z.vec  is to be converted into matrix as defined by contour parameter z containing the values to be plotted 
+# remember z.vec is objective function(z(u,v)) at each potential location of (u,v) which is a single number, remember value in optim().
+
+contour(plist, z= matrix(z.vec, ncol=100) , add= TRUE)
+legend("topleft", bty = "n", legend = c("customer", "center"), col = c("black", "blue"),pch = c(20,17), bg= "yellow", cex = 1.5)
+```
+
+# Mixed-integer linear optimization with GLPK
+
+## Generic formulation of MILP models
+
+Mixed-integer linear optimization problems (MILP) are characterized by linear objective functions and constraints w.r.t. the decision variables. However, some or all decision variables are integer and/or binary variables.
+
+$$\min_{X,Y,Z} \rightarrow C_x^T \cdot X + C_y^T \cdot Y +C_z^T \cdot Z$$
+$$A_x \cdot X + A_y \cdot Y + A_z \cdot Z \le b$$ 
+$$ X  \in R$$
+$$ Y \in Z $$
+$$ Z \in {0,1}$$
+Hence, a MILP basically consists of four parts:
+1. coeffient vector $c= (c_x,c_y,c_z)$
+2. constraint matrix $A= (A_x,A_y,A_z)$
+3. reight-hand side vector $b$
+4. direction of the contraints
+5. the domain declarations of the decision variables.
+
+These five components are to be specified when a MILP is solved with R. In case, there are only continuous variables (i.e., a linear program), no domain declarations are necessary.
+
+As an example, the dynamic lot-sizing problem or Wagner-Whitin model is considered where:
+$c_o =$ is the ordering cost rate, $$ $$ 
+$c_h = $is the stock holding cost rate,$$ $$ 
+$d_t$ = denotes the demand in period $t$.$$ $$ 
+$y_t =$ is 1 or 0 that is to decide whether to place an order in period $t$ or not,$$ $$ 
+$q_t$ =ordering quantity in period $t$, $$ $$ 
+$l_t =$the stock level in period $t$, $$ $$ 
+The MILP can be formulated compactly as:
+
+$$\min_{l_t,q_t,y_t} \rightarrow \sum_{t=1}^T (c_o \cdot y_t + c_h \cdot l_t)...........(3) $$
+$$l_{t-1} - l_t + q_t = d_t -------  t =1,...,T ...........(3.1)$$ 
+$$q_{t} - M \cdot y_t \le 0 -------  t =1,...,T ...........(3.2)$$ 
+$$l_t=0 -------  t \in {0,T}...........(3.3)$$ 
+$$q_t,l_t \ge 0 -------  t =1,...,T ...........(3.4)$$
+$$y_t \in \{0,1\} -------  t =1,...,T...........(3.5)$$
+
+# 7.2.2 Extensive model formulation
+
+For $T=3$ periods, the canonical form of the Wagner-Whitin model consists of a vector of decision variables with 10 elements
+$$ $$
+
+
+
+Thus, in R a dynamic lot-sizing problem can be formulated as follows
+```{r}
+#install.packages("Rglpk")
+library(Rglpk)    #load solver package
+n <- 6  #number of periods
+co <- 50  # ordering cost rate
+ch <- 0.1  # holding cost rate
+d.vec <- round(rnorm(n, mean = 100, sd=20)) # sample demand from normal distribution with mean 100 and sd 20
+bigM <- sum(d.vec)  # set big M which is sum of demand
+x.vec <- numeric(3*n +1) #initialize decision variables
+
+library(kableExtra)
+?kable
+tab <- data.frame("period" = 0:n, " CoYt " = c("null",1,2,3,4,5,6), " ChLt " = c(0,1,2,3,4,5,6), " 0qt"=c("null",0,0,0,0,0,0))
+kable(tab, digits = c(0,0,0),  caption = "Decision variables and coefficient vectors ", format = "pandoc")
+```
+Transpose of coffiecients making it 19 rows
+$$\begin {center}  $$
+x.vec <- $(l_0,..l_6,q_1,..,q_6,y_1...,y_6)$ total of 19 variable.
+remember number of periods are 19.
+$l_0$ is is stock level before the period of n=6 starts reading.
+```{r}
+b.vec <- c(d.vec,rep(0,n+2)) #right hand side vector
+```
+# b.vec right hand side vectors in constraints
+$d.vec =\{d1,d2,...d_6\}$ Total of 6
+The second right vector is $0 \space in \space (3.2)$ has$t=\{1,...6\}\\$ 
+in $(3.3)\space l_0=0, l_T=0$ making it 2
+$6+6+2=14 \space{or}\space {2\cdot T +2}=14 $
+
+
+```{r}
+b.vec
+
+c.vec <- c(rep(ch,n+1),rep(0,n),rep(co,n))# objective coefficient vector {co,ch,0}
+
+const.vec <- c(rep("==", n), rep("<=", n) , rep("==", 2))    # vector with constraint directions 
+
+vtype.vec <- c(rep("C",n+1), rep("C",n),rep("B",n)) # vector with variable types ("C" continuous,"I" integer, "B" binary )
+
+A.mat <- matrix(0, ncol = 3*n+1, nrow =  2*n+2) # initialize contraint matrix (Ax,Ay,Az)
+
+# write coefficient in first n rows (inventory constraints)
+
+for(i in 1:n){
+  A.mat[i,i]   <- 1         # coefficint for l_{t-1}
+  A.mat[i,i+1] <- -1        # coefficint for l_{t}
+  A.mat[i,n + 1 + i] <- 1   # coefficint for q_{t}
+}
+
+# write coefficient in rows (n+1):(2*n) (ordering constraints)
+for(i in (n+1):(2*n)){
+  A.mat[i,i+1] <- 1             # coefficint for q_{t}
+  A.mat[i,n + 1 + i] <- -bigM   # coefficint for y_{t}
+}
+
+# write coefficient in last two rows (inventory inititialization)
+  A.mat[nrow(A.mat)-1,1] <- 1    # coefficint for i_{0}
+  A.mat[nrow(A.mat),n+1] <- 1    # coefficint for i_{T}
+  
+  A.mat
+```
+
+
+#solve MILP
+
+```{r}
+sol <- Rglpk_solve_LP(obj =  c.vec,mat = A.mat, dir = const.vec,rhs = b.vec, types = vtype.vec)
+
+list( l = sol$solution[1:(n+1)],         # inventory levels
+        q = sol$solution[(n+2):(2*n+1)],   # order quantities
+        y = tail(sol$solution, n),         # order indicators
+        d = d.vec )                        # demand
+```
+```{r}
+?Rglpk_solve_LP
+```
+
+Partiularly for larger MILPs the constraint matrices quickly become quite large. However, most entries are most often 0. Therefore, it is convenient to use sparse matrices. Sparse matrices are matrices where only non-zero entries are explicitely defined by there “coordinates” in the matrix (i.e. row and column index) and their value. In R one can use sparseMatrix() from the Matrix package to create such a matrix. The syntax to create a sparse matrix is sparseMatrix(i = <vector of row indices>, j = <vector of col. indices>, x = <vector of entries>, dims = <vector matrix dimensions>)
+
+```{r}
+#assign names to decision vector
+
+#paste = Concatenate vectors after converting to character.
+#names = Functions to get or set the names of an object.
+names(x.vec) <- c(paste("l", 0:n, sep=""),paste("q", 1:n, sep = ""),paste("y",1:n,sep = ""))
+
+x.vec #l0=0 l1=0 l2=0 l3=0 l4=0 l5=0 l6=0 q1=0 q2=0 q3=0 q4=0 q5=0 q6=0 y1=0 y2=0 y3=0 y4=0 y5=0 y6=0 
+
+nb.const <- 1   # initialize number of constraints
+
+const.mat <- NULL #initialize constraint data frame
+
+#write inventory balance constraints
+for (i in 1:n) {
+  tmp.ind.row <- rep(nb.const, 3)       # row index --> in each row, three non-zero entries
+  tmp.ind.col <- c(i,                                             # l_{i-1}
+                   which(names(x.vec) %in% paste("q",i, sep="")), # find index of q_i
+                   i+1                                            # l_i
+                  )
+  tmp.const <- c(1,1,-1)  #c(l_{i-1},q_i,l_i)                                         # assign coefficients
+  const.mat <- rbind(const.mat, cbind(tmp.ind.row, tmp.ind.col, tmp.const)) # update constraint data frame
+  nb.const <- 1 + nb.const                                        # update constraint index
+}
+const.mat
+```
+#write purchasing constraints
+$$q_t-M \cdot y_t $$
+
+```{r}
+for(i in 1:n){
+  tmp.ind.row <- rep(nb.const, 2)       # row index --> in each row, two non-zero entries
+  tmp.ind.col <- c(which(names(x.vec) %in% paste("q",i, sep="")), # find index of q_i
+                   which(names(x.vec) %in% paste("y",i, sep=""))  # find index of y_i
+                  )
+  tmp.const <- c(1,-bigM)                                          # assign coefficients
+  const.mat <- rbind(const.mat, cbind(tmp.ind.row, tmp.ind.col, tmp.const)) # update constraint data frame
+  nb.const <- 1 + nb.const                                        # update constraint index
+}
+const.mat
+```
+
+
+```{r}
+# add initialization constraints
+
+const.mat <- rbind(const.mat,#row, col, const
+                   cbind(nb.const  , 1  , 1), # l_0 = 0
+                   cbind(nb.const+1, n+1, 1)) # l_T = 0
+
+const.mat
+```
+# write sparse matrix
+```{r}
+
+library(Matrix)
+A.mat <- sparseMatrix(i = const.mat[,1], # vector of row indices
+                      j = const.mat[,2], # vector of column indices
+                      x = const.mat[,3], # vector of coefficients
+                      dims = c(max(const.mat[,1]) , length(x.vec))) # matrix dimensions
+
+#dims= max(const.mat[,1]) = 14 # maximum value in the first column,
+#length(x.vec)= 19
+
+A.mat
+```
+#solve MILP
+```{r}
+sol <- Rglpk_solve_LP(obj = c.vec, mat = A.mat, dir = const.vec, rhs = b.vec, types = vtype.vec)
+# list with solution and demand --> same result as before
+list( l = sol$solution[1:(n+1)],         # inventory levels
+        q = sol$solution[(n+2):(2*n+1)],   # order quantities
+        y = tail(sol$solution, n),         # order indicators
+        d = d.vec )                        # demand
+```
+# ROI: R Optimization Infrastructure
+The package ROI attempts to provide a unified framework for seting up and solving generic optimization problems. An extensive description of the package can be found here(https://epub.wu.ac.at/5858/1/ROI_StatReport.pdf ).
+```{r}
+library(ROI)  #load package
+#ROI_available_solvers() #check all available solvers
+#ROI_installed_solvers() #check installed solvers
+
+#install some new solvers
+#install.packages("ROI.plugin.quadprog")
+#install.packages("ROI.plugin.symphony")
+#ROI_installed_solvers()
+```
+Commercial solvers for linear optimization problems are typically the most powerful solvers available but sometimes rather difficult to integrate into open-source project as they are proprieary software. Nonetheless, there are some workarounds for integrating Gurobi and CPLEX. Prerequisite is always that solver is already installed on your machine and the corresponding R-API is installed. For Gurobi the necessary API is bundled in an R package which is distributed with the software an zip-archive. Once Gurobi and the corresponding R package is installed, it can be registered and used as an ROI solver. Note that it might be necessary to install the ROI Gurobi plugin from the sources(https://github.com/Fl0Sch/ROI.plugin.gurobi).
+```{r}
+#GUROBI not installed yet
+#install.packages("slam")
+#install.packages("ROI.plugin.gurobi", repos="http://R-Forge.R-project.org")
+#x=6
+```
+
+To formulate an optimization problem, the function OP(objective, constraints, types, bounds) is used whereby the objective and constraint components are generated by creator functions. The types of variables are defined by a character vector of length  n consisting of the characters “C”, “I” or “B” indicating continuous, integer or binary variables, respectively. Corresponsindgly, upper and lower bounds of the variables can be given as a named list consisting of two vectors of length  n  and named “lower” and “upper”.
+
+For the objective function these creator functions are defined as follows:
+
+....
+
+
+```{r}
+n <- 100
+a.vec <- sample(1:100,size= n) #sample weights for point/customer
+x.vec <- rnorm(n) #sample x coordinates
+y.vec <- rnorm(n)#sample y coordinates
+
+?F_objective
+
+```
+$F=$ an R "function" taking a numeric vector x of length n as argument.
+
+$n=$ the number of objective variables.
+```{r}
+#n=2 in a manhattan distance because we a looking for only one locaion(x,y) making is 2 variables
+copt<- OP(
+  objective = F_objective(F= function(loc) sum(a.vec * (abs(x.vec - loc[1]) + abs(y.vec - loc[2]) ) ),n=2),
+  types = rep("C",2),
+  bounds = V_bound(ub=rep(Inf,2),lb= rep(-Inf,2))
+  
+)
+
+?ROI_solve
+```
+
+$ROI\_solve(x, solver, control = list(), ...)$
+
+$x=$ an optimization problem of class "OP".
+$start=$ Starting value or coordinate.
+
+```{r}
+copt_sol$solution <- ROI_solve(copt,start=c(0,0)) #solve the problem
+
+copt_sol$solution  #obtain solution
+#No objective solution found, The objective value is: 7.495368e+03
+
+copt_sol$objval  #objective value 7794.655
+```
+To change the problem, an already existing optimization problem can be updated componentwise:
+```{r}
+objective(copt) <- F_objective(F = function(loc) sum( 1/a.vec * (abs(x.vec - loc[1]) + abs(y.vec - loc[2]) ) ), n = 2)
+
+copt_sol <- ROI_solve(copt, start = c(0,0))         # solve the problem
+
+copt_sol$solution #obtain solution
+#0.44684981 -0.09807783
+
+copt_sol$objval  #objective value
+ #6.864493
+```
+Similarly, the ROI can be used to solve mixed-integer problems. Consider the following linear assignment problem assigning $n$ elements to $n$ rooms in a cost-minimal way:
+$$\min \rightarrow \sum_{i,j=1}^n x_{ij}\cdot c_{ij} $$
+subject to $\\$
+\begin {align}
+\sum_{i=1}_n = 1 \qqad \forall j =1,..,n \\
+\sum_{j=1}_n = 1 \qqad \forall i =1,..,n \\
+x_ij \in \{0,1\}\\
+\end {align}
+
+In the extensive ILP formulation, the decision vector is defined as
+$X=(x_{11},x_{12},...,x_{1n},x_{21},...,x_{nn}).$ for a linear assignment problem with 3 rooms/elements, the constraint matrix is constructs as 
+```{r}
+# create problem dimension
+
+n <- 10
+
+# create cost vector
+c.vec <- rpois(n^2, 100) #sample costs from Poisson distribution with mean 100
+
+# create empty constraint matrix
+L.mat <- matrix(0,ncol = n^2, nrow = 2*n)
+#first n rows
+#do.call= constructs and executes a function call from a function and a list of arguments.
+#cbind is column bind od 1:n rows
+L.mat[1:n,] <- do.call(cbind, lapply(1:n, function(x) diag(n)))
+
+#last n rows
+L.mat[(n+1):(2*n),] <- t(sapply(1:n,function(x) c(rep(0,(x-1)*n), rep(1,n),rep(0,(n-x)*n))))
+```

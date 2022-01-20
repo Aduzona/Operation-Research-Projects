@@ -1,0 +1,11 @@
+"0","paste0(""Choice Probability for low buyer"",round(sum(probs$X),3))
+"
+"1","[1]"
+"1"," ""Choice Probability for low buyer0.095"""
+"1","
+"
+"0","paste0(""No choice Probability low buyer"", 1-round(sum(probs$X),3))"
+"1","[1]"
+"1"," ""No choice Probability low buyer0.905"""
+"1","
+"

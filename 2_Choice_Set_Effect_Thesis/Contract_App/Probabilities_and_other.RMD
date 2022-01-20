@@ -1,0 +1,102 @@
+---
+title: "Probabilities"
+author: "Diego Uchendu"
+date: "01/05/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+```{r}
+library(kableExtra)
+library(pracma)
+library(xlsx)
+library(ggplot2)
+library(tidyverse)
+library("openxlsx")
+```
+
+
+
+```{r}
+Data<- read.xlsx("New_irrational_12.xlsx",sheet = 4)
+#Data[,1:2]
+#contract_set1<- read.xlsx("contract_set1.xlsx",sheet = 6)
+#head(contract_set1)
+```
+
+oc: offered contracts M
+ce: contract estimate $\beta_m$
+
+```{r}
+oc<-4
+ce<-1
+contract_by_offered<-Data%>% filter(Offered_Contract==oc & Contract_Estimate== ce)
+
+probs<-contract_by_offered%>%filter(b=="b1")%>%subset(X>0)
+
+paste0("Choice Probability for low buyer",round(sum(probs$X),3))
+paste0("No choice Probability low buyer", 1-round(sum(probs$X),3))
+```
+
+```{r}
+probabilities_New<-function(oc,ce,type){
+  contract_by_offered<-Data%>% filter(Offered_Contract==oc & Contract_Estimate== ce)
+
+  probs<-contract_by_offered%>%filter(b==type)%>%subset(X>0)
+  return(round(sum(probs$X),3))
+}
+
+1-probabilities_New(oc,ce,b)
+```
+
+
+## Choice Probability plot
+
+```{r}
+Data%>%select(Offered_Contract,Contract_Estimate,b,X)%>%filter(b=='b2')%>%subset(X>0 & Contract_Estimate<9)
+
+```
+
+```{r}
+
+prob_fun<-function(type){
+  sub_prob<-Data%>%select(Offered_Contract,Contract_Estimate,b,X)%>%filter(b==type)%>%subset(X>0 & Contract_Estimate<9)
+  sub_prob$Offered_Contract<- factor(sub_prob$Offered_Contract,levels = c('1','2','3','4','5','6','7','8'))
+  sub_prob$Contract_Estimate<- factor(sub_prob$Contract_Estimate,levels = c('1','2','3','4','5','6','7','8'))
+
+  return(ggplot(sub_prob,aes(x=Offered_Contract  ,y= X))+geom_bar(aes(fill= Contract_Estimate ),stat = "identity",width = 0.25)+scale_fill_brewer(palette = "Dark2")+labs(y="Choice Probability of Buyer",x="Offered Contract")+facet_grid(~Contract_Estimate)+ theme_bw()+ggtitle("Offered Contract Vs Choice probability with Contract Estimate") )
+}
+
+prob_fun(type="b2")
+
+
+```
+
+
+
+```{r}
+      Data_profit<- read.xlsx("New_irrational_12.xlsx",sheet = 1)
+
+      
+      Data_profit$Offered_Contract<-as.numeric(Data_profit$Offered_Contract)
+      Data_profit$Contract_Estimate<-as.numeric(Data_profit$Contract_Estimate)
+      sub_profit<- subset(Data_profit,Offered_Contract<=8 & Contract_Estimate<=8)
+    sub_profit$Offered_Contract<- factor(sub_profit$Offered_Contract,levels = c('1','2','3','4','5','6','7','8'))
+      sub_profit$Contract_Estimate<- factor(sub_profit$Contract_Estimate,levels = c('1','2','3','4','5','6','7','8'))  
+      
+      ggplot(sub_profit,aes(x=Offered_Contract  ,y= Supplier_Profit))+geom_bar(aes(fill= Contract_Estimate ),stat = "identity",width = 0.25)+scale_fill_brewer(palette = "Dark2")+labs(y="Expected Supplier Profit",x="Offered Contract")+facet_grid(~Contract_Estimate)+ theme_bw()+ggtitle("Offered Contract Vs Supplier Profit with Contract Estimate")
+      
+    
+```
+
+```{r}
+contract_set<- read.xlsx("contract_set1.xlsx",sheet = 6)
+contract_set%>%subset(Z==1)%>%mutate(sc=v+r)
+```
+

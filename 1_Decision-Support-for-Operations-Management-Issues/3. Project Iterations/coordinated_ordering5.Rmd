@@ -1,0 +1,528 @@
+---
+title: "coordinated_ordering5"
+author: "GroupB"
+date: "24/06/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+# Data preparation 
+
+```{r setup, include=TRUE, cache=F}
+library(kableExtra)
+library("readxl")
+product_data <- read_excel("Data_ordering.xlsx",sheet = "product data")
+box_data <- read_excel("Data_ordering.xlsx",sheet = "box data")
+#rack data
+Total_racks=8
+levels_per_rack=4
+rack_length= 6000
+rack_width=1750
+rack_height=300
+
+product_data$demand_per_year= ceiling((product_data$`demand per day` *365)/ product_data$`pieces/box`)
+
+product_data$box_cost= product_data$`pieces/box` * product_data$price
+
+product_data
+
+# shortcut ordering cost
+
+product_data <- merge(product_data, box_data[,c("box ID", "ordering cost (€)")], by = "box ID")
+
+colnames(product_data)[8] <- "ordering_cost"
+
+# order_cost <- double(length(product_data$`box ID`))
+# 
+# for(j in 1: length(box_data$`box ID`)){
+#   for (k in 1:length(product_data$`box ID`)) {
+#     if(box_data$`box ID`[j]==product_data$`box ID`[k]){
+#       order_cost[k] <- box_data$`ordering cost (€)`[j]
+#     }
+#   }
+#   
+# }
+# 
+# product_data$ordering_cost <- order_cost 
+# product_data
+```
+
+
+
+
+
+# EOQ modelling
+
+
+```{r, cache=TRUE}
+#dei= demand_per_year, cori= ordering cost for box i
+#cord= ordering cost, pri= box cost, h= interest rate
+
+# directly vectorized
+so_eoq_fun <- Vectorize(function(dei,cori,cord,pri,h){
+  eoq<- sqrt((2*dei*(cori+cord))/(pri*h))
+  return(eoq)
+})
+
+# maximum EOQ provided there is no coordination of ordering cycles (i.e., cord are not shared among parallely ordered items)
+vec_so_eoq_fun.max <- so_eoq_fun(dei = product_data$demand_per_year,cori=product_data$ordering_cost,cord=1500,pri=product_data$box_cost,h=0.10)
+# minimum EOQ disregarding common ordering cost cord
+vec_so_eoq_fun.min <- so_eoq_fun(dei = product_data$demand_per_year,cori=product_data$ordering_cost,cord=0,pri=product_data$box_cost,h=0.10)
+
+product_data$eoq.min <- round(vec_so_eoq_fun.min)
+product_data$eoq.max <- round(vec_so_eoq_fun.max)
+
+
+```
+
+
+# Lane occupation 
+```{r}
+# constraints #####################################
+# this can be formulated more elegantly, but it works and that suffices
+b_sorting <- double(length(product_data$`box ID`)) 
+b_not_sorting <-double(length(product_data$`box ID`))
+
+for(j in 1: length(box_data$`box ID`)){
+  for (k in 1:length(product_data$`box ID`)) {
+    if(box_data$`box ID`[j]==product_data$`box ID`[k]){
+      
+      if(box_data$sorting[j]=="width"){
+        b_sorting[k] <- box_data$width[j]
+        b_not_sorting[k]<- box_data$length[j]
+        
+      }else{
+        b_sorting[k] <- box_data$length[j]
+        b_not_sorting[k]<- box_data$width[j]
+      }
+    }
+  }
+  
+}
+
+product_data$b_sorting <- b_sorting 
+product_data$b_sorting
+product_data$b_not_sorting <- b_not_sorting
+
+lane.min <- ceiling(product_data$eoq.min * product_data$b_not_sorting / rack_length)
+lane.max <- ceiling(product_data$eoq.max * product_data$b_not_sorting / rack_length)
+
+# total rack width 
+
+rack_total_width <- rack_width * 4 * 8
+
+# overflow in mm
+sum(lane.min*product_data$b_sorting) - rack_total_width
+sum(lane.max*product_data$b_sorting) - rack_total_width
+# relative overflow in %
+(sum(lane.min*product_data$b_sorting) - rack_total_width)/rack_total_width*100
+(sum(lane.max*product_data$b_sorting) - rack_total_width)/rack_total_width*100
+
+```
+
+# Constrained EOQ optimization
+
+
+```{r, cache=TRUE}
+
+library(ROI)
+library(ROI.plugin.alabama)
+
+n <- length(product_data$`material ID`) #number of materials
+cori <- product_data$ordering_cost   #ordering cost for each items
+cord <-  1500    #ordering cost whenever there is an order
+dei <- product_data$demand_per_year
+h<-0.10
+box_cost <- product_data$box_cost #pri
+
+# objective function --> I dropped the 1500*62 as it is not decision relevant
+obj.fun <- function(q, d= dei, c.or = cori, c.h = h*box_cost  ) (sum((dei/q)*c.or)+ sum(c.h*(q/2)))
+# benchmarks
+obj.fun(product_data$eoq.max)
+obj.fun(product_data$eoq.min)
+# constraint function --> also contains the ceiling of lanes and a sum was missing
+const.fun <- function(q, bns = product_data$b_not_sorting, bs = product_data$b_sorting, rl = rack_length) {
+  sum(bs * ceiling( bns * q / rl))
+  }
+
+const.fun(product_data$eoq.max)
+const.fun(product_data$eoq.min)
+# try to figure out a freasible starting solution
+const.fun(product_data$eoq.min/10) -  rack_total_width
+
+qopt <- OP(
+  objective = F_objective(F=obj.fun ,n=n),
+  types = rep("C",n),
+  bounds = V_bound(ub= product_data$eoq.min , lb= rep(1, n)),
+  constraints = F_constraint(F=const.fun,
+                             dir="<=",
+                             rhs = rack_total_width)
+)
+
+#This shows that minimum EOQ is too big and therefore will not meet the rack space constraint.
+const.fun(min(product_data$eoq.max))#366272
+const.fun(min(product_data$eoq.max)/8)# 61428  still > 56000
+const.fun(min(product_data$eoq.max)/8.7)#52716 < 56000
+const.fun(round(min(product_data$eoq.max)/10))# 52716 < 56000
+round(min(product_data$eoq.max)/10) #17.3
+
+
+copt_sol <- ROI_solve(qopt, start = rep(min(product_data$eoq.max)/10,n), solver = "alabama" )
+# always check whether the algorithm converged
+copt_sol# The objective value is: 1.313873e+05
+# solution
+copt_sol$solution #vector of optimal Quantity that meets the space constraints and minimizes the Obj function.
+round(copt_sol$solution)
+copt_sol$objval #131387.3
+
+#########################################
+# Now you need to fine tune the results 
+# --> there are rounding issues -> exactly determining the lane configuration per shelf level
+# --> idea to coping with the common ordering cost
+
+const.fun(copt_sol$solution)#55884
+const.fun(round(copt_sol$solution))#55686
+
+
+obj.fun(copt_sol$solution)#131387.3
+obj.fun(round(copt_sol$solution))#132096.3  rounded q values
+
+```
+
+
+# Joint Ordering (JO)
+
+Using Joint replenishment problem
+
+Assumptions:
+
+- One supplier with outbound storage.
+- $i=\{1,...,n\}$ products
+- Demand rates: $de_i$
+- Stock_holding cost rates: $c_i^{sh}$
+- Specific setup costs: $c_i^{or}$
+- General setup costs: $c^{-or}$
+- Cycle time of product $i$: $T_i$
+
+```{r}
+n <- length(product_data$`box ID`)
+c.or0 <- cord
+c.or <- product_data$ordering_cost
+#H.vec <- 0.5 * dei * c.sh
+# based on the previous definition, I think this should be the vector of holding cost multipliers
+H.vec <- 0.1 * product_data$box_cost * dei * .05
+
+```
+
+
+## Objective Function with no capacity constraint
+
+- $B=$basic cycle time
+- $H_i=0.5 \cdot de_i \cdot c_i^{sh}$
+- $H_0=0$  Holding cost multiplier are $H_0 \space and  \space H_i$
+- $$C(m_i B)=\sum_{i=0}^n (\frac {c_i^{or}}{m_i \cdot B}+H_i \cdot m_i \cdot B) == \frac {c_o^{or}}{B}+ \sum_{i=1}^n (\frac {c_i^{or}}{m_i \cdot B}+H_i \cdot m_i \cdot B)  \\ subject \space to: \quad \quad \quad \quad \quad \quad \quad \quad \quad  \\ m_i \ge m_0 \quad \forall i >0 \\m_i \in \mathbb N \qquad \forall i   $$
+
+--> an important side note is that the JRP is basically a quite standard EOQ problem which uses the substitution $T_i = \frac{q_i}{y_i}$, i.e., $q_i = T_i \cdot y_i$. Then, you substitute $T_i = m_i \cdot B$ ans result in the JRP (adding the common ordering cost).
+
+```{r}
+jrp.obj.fun <- function(m , B, cor, Hvec, cor0) cor0/B + sum(cor/B/m) + sum(Hvec*B*m)
+```
+
+
+
+- *Cycle Time*
+
+we determine $T_i=\sqrt (\frac {c_i^{or}}{H_i})$ and $T^C=\frac {\sum_{j=0}^{i´} c_j^{or}}{\sum_{j=0}^{i´}H_j}$
+```{r}
+# calculate cycle times
+T.vec <- sqrt(c.or/H.vec)
+# order products
+reo.id <- order(T.vec)
+T.vec <- T.vec[reo.id]
+c.or <- c.or[reo.id]
+H.vec <- H.vec[reo.id]
+```
+
+```{r}
+# calculate T^2 and cumu. cost shares
+res.mat <- t(cbind(c.or/H.vec,(c.or0 + cumsum(c.or))/cumsum(H.vec)))
+df <- data.frame(res.mat)
+colnames(df) <- reo.id 
+rownames(df) <- c(  "$T_i$" ,"$T^C$"  )
+kable(df,"pandoc", row.names = T)
+```
+
+```{r}
+# identify break
+which(res.mat[1,] > res.mat[2,])# break occured after 13
+id.comb <- min(which(res.mat[1,] > res.mat[2,])) - 1 #3
+id.comb
+# calculate B
+B <- min(T.vec) #0.01955164
+# solution with m - integers #######################
+m.vec.int <- round(T.vec/B,0)
+#I need to address this
+m.vec.int[1:id.comb] <- 1  # position 1 to 13 should be assigned 1
+# re-optimize B for fixed m.vec
+B.int <- sqrt(sum(c.or/m.vec.int)/sum(m.vec.int*H.vec))#0.2431548
+# total cost 
+c.cost.int <- jrp.obj.fun( m = m.vec.int, B=B.int, cor = c.or,Hvec=H.vec, cor0 = c.or0)#18646.93
+df <- data.frame(rbind(round(T.vec/B,2), round(T.vec/B), m.vec.int))
+colnames(df) <- reo.id 
+rownames(df) <- c("$m_i=\\frac {T_i}{B}$" ,"$[m_i]$", "$[\\tilde{m}_i]$" )
+kable(df,"pandoc", row.names = T)
+```
+
+Reoptimizing basic cycle time yields $B=$ `r round(B.int,2)` and the total cost are `r round(c.cost.int,2)` 
+
+The order quantities are given by multiplying the cycle times $T_i$ with demand rates $y_i$, i.e. $q_i = T_i \cdot de_i$ such that
+
+```{r}
+dei <- dei[reo.id]
+df <- data.frame(rbind( m.vec.int, round(m.vec.int*B, 2), round(m.vec.int*B*dei, 2) ))
+colnames(df) <- reo.id 
+rownames(df) <- c("$[\\tilde{m}_i]$", "$T_i$", "$q_i$" )
+kable(df,"pandoc", row.names = T)
+```
+
+--> Now the question is: Is this feasible? --> no:
+
+```{r}
+q.vec <- m.vec.int*B*dei
+const.fun(q.vec) > rack_total_width
+```
+
+
+## Including capacity constraint
+
+
+When you try to optimize the JRP directly, without introducing the substitution $T_i = m_i \cdot B$ you need to update the JRP function as follows
+
+```{r}
+require(ROI)
+require(ROI.plugin.alabama)
+jrp.obj.fun2 <- function(Tvec, cor, Hvec, cor0) sum(cor0/Tvec) + sum(cor/Tvec) + sum(Hvec*Tvec)
+# you need to initialize the parameters in the objective function --> Tvec is to be optimized over, the rest is given
+jrp.obj.fun2 <- function(Tvec, cor=c.or, Hvec = H.vec, cor0 = c.or0) sum(cor0/Tvec) + sum(cor/Tvec) + sum(Hvec*Tvec)
+
+qopt2 <- OP(
+  objective = F_objective(F=jrp.obj.fun2 , n=62),
+  types = rep("C",n),
+  bounds = V_bound(ub= rep(30, 62), lb= rep(.001,62))
+) 
+
+jrp.obj.fun2(m.vec.int*B)#190854.8
+jrp.obj.fun2(rep(.00001,62))#9724500000
+jrp.obj.fun2(rep(15,62))#173920.9
+# you don't need Alabama here as there is no constraint. Basically you can also optimize this problem by taking derivatives
+copt_sol2 <- ROI_solve(qopt2, start = m.vec.int*B)
+copt_sol2 #5.671162e+04
+
+copt_sol2$solution
+
+```
+
+
+--> You should  integrate the shelf capacity constraint 
+--> I also recommmend to stick with the basic period approach
+
+This is formally defined as 
+$$ \sum_{i=1}^n b_i \cdot \left\lceil\frac{b^{-1}_i \cdot q_i}{rl} \right \rceil \leq \text{tot_rack_width}$$
+Thus, with the substitution above, the left-hand side changes to
+$$ \sum_{i=1}^n b_i \cdot \left\lceil\frac{b^{-1}_i \cdot T_i \cdot y_i}{rl} \right \rceil = \sum_{i=1}^n b_i \cdot \left\lceil\frac{b^{-1}_i \cdot m_i \cdot B \cdot y_i}{rl} \right \rceil$$
+integrating the function with respect to m.
+
+$$f(m) =\sum_{i=1}^n b_i \cdot \left\lceil\frac{b^{-1}_i \cdot m_i^2 \cdot B \cdot y_i}{2\cdot rl} \right \rceil $$
+Thus, you can change the constraint function quite easily
+
+```{r}
+const.fun2 <- function(m, B = B.start, y= dei, bns = product_data$b_not_sorting, bs = product_data$b_sorting, rl = rack_length) {
+  sum(bs * ceiling( bns * m*B*y / rl))
+  }
+```
+
+Then, you can use the original JRP function and update the model by including the capacity constraint. Therefore I recommend that you fix $B$ to some appropriate value based on the feasible solution above
+
+```{r}
+# we reinitialize the vectors
+n <- length(product_data$`box ID`)
+c.or0 <- cord
+c.or <- product_data$ordering_cost
+H.vec <- 0.1 * product_data$box_cost * dei * .05
+
+
+T.feas <- copt_sol$solution/dei
+B.start <- min(T.feas)
+
+jrp.obj.fun <- function(m , B = B.start, cor = c.or, Hvec = H.vec, cor0 = c.or0) cor0/B + sum(cor/B/m) + sum(Hvec*B*m)
+jrp.obj.fun(m= rep(1, 62))
+const.fun2(m= rep(1, 62))
+?OP
+qopt3 <- OP(
+  objective = F_objective(F=jrp.obj.fun ,n=n),
+  # now integer decision variables
+  types = rep("C",n),
+  bounds = V_bound(li = 1:n, ui = 1:n, ub= rep(50, n) , lb= rep(1, n)),
+  constraints = F_constraint(F=const.fun2,
+                             dir="<=",
+                             rhs = rack_total_width)
+)
+# god starting point essential --> m = T.feas/B.start
+copt_sol3 <- ROI_solve(qopt3, start = T.feas/B.start , solver = "alabama")
+
+copt_sol3 #2.995570e+05
+
+copt_sol3$solution
+
+jrp.obj.fun(m= copt_sol3$solution) #299557
+const.fun2(m= copt_sol3$solution) <= rack_total_width # True
+
+# round all m value to upper floor ensuring that demand is met.
+
+jrp.obj.fun(round(copt_sol3$solution),2)
+const.fun2(round(copt_sol3$solution,2)) <= rack_total_width # rounding to 2 decimal place violates the contraint, also rounding to nearest whole number violates the constraint. or putting 
+```
+
+Now you should have some good starting solution. Still you need to round the solution. 
+Afterwards, you have to find a layout scheme such that a precise shelf layout results. 
+
+# Cutting Stock Problem Constraints
+# -------------------------------------------------
+
+In Each runway, only one part should be stored. Thereby, the width of a runway can be adapted to width of the box type which corresponds to the part assigned to the runway.
+
+, this means $\le$ 62 widths in a pattern and these widths are made up of box id sorting. 
+
+
+- *Something for Excel:*
+
+The aim of this is to know the maximum number of lanes required for item $i$ to fulfull demand, 
+
+1. Space ratio $sr$:
+The space required for each item $i$ compared to the total space available for storage in mm.
+This is product of demand, box sorting and box_not_sorting over sum product for all items
+
+$$ sr_i= \frac {dei_i \cdot b_i \cdot b_i^{-1}}{\sum_{i=1}^{n=62} dei_i \cdot b_i \cdot b_i^{-1}}  \cdot rl \cdot tot\_rack\_width$$
+
+2. Lane per item $lpi$:
+This shows how many lanes each item have need regardless of capacity.  
+
+$$lpi_i= \frac {sr_i}{b_i \cdot rl}$$
+```{r}
+#RATIO OF SPACE FOR EACH ITEM
+space.ratio <- numeric(length(product_data$demand_per_year))
+
+# space ratio in millileters, proportion of space
+for(item in 1:length(product_data$demand_per_year)){
+  space.ratio[item] <-((product_data$demand_per_year[item]*product_data$b_sorting[item]*product_data$b_not_sorting[item])/sum(product_data$demand_per_year*product_data$b_sorting*product_data$b_not_sorting)) * rack_length * rack_total_width
+  
+}
+
+lanes.per.item <- numeric(length(product_data$demand_per_year))
+#how many lanes in a rectangle
+for(item in 1:length(product_data$demand_per_year)){
+  
+  lanes.per.item[item]<- space.ratio[item]/(product_data$b_sorting[item] *rack_length)
+}
+
+lanes.item.summary <- ceiling(lanes.per.item)
+
+
+#Generate patterns, done in Excel
+
+patterns <- read_excel("Cutting_Stock.xlsx",sheet = "Pattern")
+
+unique(patterns)
+
+```
+
+- *Lane formulation*
+
+$rl=6000 \\$ rack length
+1. Number of boxes in a lane:
+$$n_i=\frac {rl}{b_i^{-1}}=\frac {6000}{297}=20.20=20boxes$$
+2. How many lanes part $i$ will occupy if you order some number of boxes
+$$lane_i=\frac {q_i}{n_i}\\lane_i=q_i \cdot \frac {b_i^{-1}}{rl}=214 \cdot \frac {297}{6000}=10.593= 11 \space lanes  \\ lane_i=  m_i \cdot B \cdot dei_i \cdot \frac {b_i^{-1}}{rl} $$
+
+The table below is same as the last table displayed in R code above with showing $k$ patterns and $i$ sorting or lane with $ lane_{ik}=  m_{ik} \cdot B \cdot dei_{ik} \cdot \frac {b_{ik}^{-1}}{rl}$ 
+
+
+|$p_k=$Pattern |$b_i=\{b_1, b_2,...,b_{62} \}$|$rw=$ Rack Width|
+|---------------|----------------------------|----------|  
+|1 | $\{lane_{11},lane_{12},lane_{1,n}\}$ | 1750|
+|2 | $\{lane_{21},lane_{22},lane_{2,n}\}$ | 1750|
+|3 | $\{lane_{31},lane_{32},lane_{3,n}\}$| 1750|
+|k | $\{lane_{k1},lane_{k2},lane_{k,n}\}$| 1750|
+
+- *Equation 1: level constraint*
+
+calculate for each level, what types of lanes ahould be assigned, or be built, This is level contraint such that each pattern should be less than or equal to rack width, like putting lanes in a pattern. Sum product of lane for product $i$ in pattern $k$ and lane widht $b_i$ value offer product $i$ in pattern $k$ and $y_{ik} $denotes if a lane is chosen or not.
+
+2. - *Equation 2: Demand constraint*
+
+Ensures that any combination of patterns picked by equation (1) meets demand.That is pick patterns that meets demand.
+Summation  of quantity for pattern $k$ for part $i$.
+
+
+$$\sum_{k=1}^{p_k} \sum_{i=1}^{n=62} lane_{ik} \cdot b_{ik} \cdot y_{ik} \le  rw  \qquad  \\ \sum_{i=1}^{n=62} \sum_{k=1}^{p_k} q_{ki}  \ge dei_i \\ y \in \{0,1\}$$
+The above can be also be reformulated to:
+
+$$ \sum_{i=1}^{n=62} lane_{ik} \cdot b_{ik} \cdot y_{ik} \le  rw  \qquad  \forall k=1,...,p_k\\ \sum_{i=1}^{n=62} \sum_{k=1}^{p_k} q_{ki}  \ge dei_i \\ y \in \{0,1\}$$
+
+# Total Formulation:
+
+$$ \min \rightarrow \frac {c_o^{or}}{B}+ \sum_{i=1}^n (\frac {c_i^{or}}{m_i \cdot B}+H_i \cdot m_i \cdot B)$$
+Subject to:
+
+$$ \sum_{i=1}^{n=62} m_{ik} \cdot B \cdot dei_{ik} \cdot \frac {b_{ik}^{-1}}{rl} \cdot b_{ik} \cdot y_{ik} \le  rw  \qquad  \forall k=1,...,p_k  \space (1)\\ \sum_{i=1}^{n=62} \sum_{k=1}^{p_k} m_{ik} \cdot B \cdot dei_{ik} \ge dei_i \space (2) \\ y \in \{0,1\}$$
+
+We constraint number of patterns to be 32 reperesenting 32 levels.
+```{r}
+jrp.obj.fun(m= copt_sol3$solution)
+
+dvec <- product_data$demand_per_year
+
+#level constraint
+level.const <- function(y,m=round(copt_sol3$solution) , B = B.start,bns=b_not_sorting,bs=b_sorting,  dvec=product_data$demand_per_year,rl=rack_length){
+  for (k in 1:32) {
+    for(i in 1:62){
+      m[k,i]*B*dvec[k,i]*(bns[k,i]/rl)*bs[k,i]*y[k,i]
+    }
+    
+  }
+  
+}
+
+# y is optional since k= 32 which is equivalent to 32 levels.
+demand.const <- function(y,m=round(copt_sol3$solution) , B = B.start,bs=b_sorting,  dvec=product_data$demand_per_year){
+  
+  for (i in 1:62) {
+    for (k in 1:32) {
+       m[k,i]*B*dvec[k,i]*y[k,i]
+    }
+  }
+  
+}
+
+
+qopt4 <- OP(
+  objective = F_objective(F=jrp.obj.fun ,n=n),
+  # now integer decision variables
+  types = rep("C",n),
+  bounds = V_bound(li = 1:n, ui = 1:n, ub= rep(50, n) , lb= rep(1, n)),
+  constraints = F_constraint(F=level.const,
+                             dir="<=",
+                             rhs = rack_width)
+  
+)
+
+#copt_sol4 <- ROI_solve(qopt4, start = T.feas/B.start , solver = "alabama")
+# Error in m[k, i] : incorrect number of dimensions
+
+```
+
+```{r}
+
+```
+

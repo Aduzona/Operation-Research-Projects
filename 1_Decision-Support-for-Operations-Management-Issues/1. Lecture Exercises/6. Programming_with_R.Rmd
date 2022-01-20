@@ -1,0 +1,345 @@
+---
+title: "Programming with R"
+author: "Diego Uchendu"
+date: "12/05/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 6.1 apply, sapply & co
+
+apply(x,MARGIN,FUN), x type is matrix , comment: MARGIN controls whether columns or rows of x are passed to FUN
+```{r}
+m1 <- matrix(1:10, ncol=2)
+?apply
+#for a matrix 1 indicates rows, 2 indicates columns, c(1, 2) indicates rows and columns.
+apply(m1,1,function(x) max(x)) #maximum in each row
+apply(m1,1, max)
+apply(m1, 2, function(x) diff(range(x)))#range in each column
+```
+Apply functions are useful but typically slow., built in functions are much faster.
+
+## Buitin function
+
+```{r}
+x <- matrix(1:10^6,ncol=10)
+#returns cpu and time the expression used
+system.time(apply(x, 1, sum))  # using apply
+system.time(rowSums(x)) #using buitin function
+```
+
+
+#using lapply and sapply
+lapply(x,FUN), type: vector and list, comment: each component is passed FUN, always returns a list
+sapply(x,FUN), type: vector and list, comment: same as lapply but simplifies results as far as possible e.g a vector
+```{r}
+l1 <- list(matrix(sample(1:100, 25),ncol = 5), matrix(sample(1:100, 36),ncol = 6),matrix(sample(1:100, 16),ncol = 4))
+lapply(l1, diag) #returns diagonal elements
+sapply(l1, diag)#sapply cannot simplify much
+sapply(l1,function(x) sum(diag(x))) # now sapply returns a vector
+```
+#mapply
+mapply(FUN,...) x type: multiple, comment: multiple entries(typically vectors) whose entries  are passed to FUN.
+```{r}
+weig.mh.dist <- function(a, x, y, u = 0, v = 0) a * (abs(x - u) + abs(y - v) ) # claculates the weighted Manhattan distance from (x,y) to (u,v) 
+
+# note that u and v have default value 0 --> thus they don't need to be specified
+weig.mh.dist(a=10,x=1,y=1)
+weig.mh.dist(a = 10, x = 1, y = 1, u = 1, v = 1)  # but they can be specified
+
+n<- 10             # set a number of points/customers
+a.vec <- sample(1:100,size = n) # sample waights for each point/customer
+x.vec <- rnorm(n)  #sample x coordinates
+y.vec <- rnorm(n)  #sample y coordinates
+mapply(weig.mh.dist, a.vec,x.vec, y.vec) #distance to (0,0)
+mapply(weig.mh.dist, a.vec, x.vec, y.vec, u = 1, v = 1) # distances to (1,1), u and v are passed to weig.mh.dist
+```
+# Exercise 1:
+Try to rearrange the data objects a.vec, x.vec, and y.vec such that apply can be used to calculate all distances.
+
+5 variables:
+x[1]= a, x[2]= x   x[3]=y,   x[4]= u,  x[5]= v
+```{r}
+weig.mh.dist <- function(x){
+  x[1] * (abs(x[2] - x[4]) + abs(x[3] - x[5]) )
+} 
+n <- 10   # set a number of points/customers
+a.vec <- sample(1:100, size = n)  # sample weights for each point/customer
+x.vec <- rnorm(n) # sample x coordinates
+y.vec <- rnorm(n) # sample y coordinates
+
+df <- data.frame(a=a.vec,x= x.vec, y=y.vec, u=1, v=1)
+apply(df, 1, weig.mh.dist)
+```
+
+
+```{r}
+v.weigh.mh.dist <- Vectorize(weig.mh.dist, c("a","x","y")) # vectorize arguments a, x, and y
+
+n <- 10^6   # set large number of points/customers
+a.vec <- sample(1:100, size = n, replace = T)# sample weights for each point/customer
+x.vec <- rnorm(n)                   # sample x coordinates
+y.vec <- rnorm(n)                   # sample y coordinates
+system.time(mapply(weig.mh.dist,a.vec,x.vec,y.vec))#slow
+system.time(v.weigh.mh.dist(a.vec, x.vec, y.vec)) #a bit faster
+
+system.time(weig.mh.dist(a.vec, x.vec, y.vec)) #awesomely fast
+```
+# 6.2 tapply & aggregate
+These allow for passing groups of data to a function.
+```{r}
+y <- c(rnorm(10,0,1),runif(10,0,1),rnorm(10,1,1),runif(10,0,2)) # some normally and uniformly dist. samples
+x1 <- rep(c("norm", "unif","norm","unif"),each=10) # distribution groups
+x2 <- rep(c("base","ext."), each=20) #setting groups
+
+tapply(X=y,INDEX = list(x1,x2),FUN = mean)# means of sample per group
+```
+
+When groups are defined to categorize variables, typically data frames are constructed. In this case, aggregate can be used to by specifying a formula. A formula is constructed as follows: <dependent var.> ~ <group var. 1> + <group var. 2>. Note that formulas are generally used to model functional dependencies between variables, see here for an introduction.
+```{r}
+# usually a data frame/tibble is constructed
+library(tibble)
+tb1 <- tibble(y, distr = x1,set=x2) #create a tibble/dataframe
+aggregate(formula=y ~ distr + set, data=tb1, FUN = mean) #same means of sample per group as before
+```
+# 6.3 loops & co.
+# for-loops
+```{r}
+# recall the weighted Manhattan distance function used before
+# now, we iteratively simulate the setting introduced above
+
+n <- 10^6        # number of trials
+u <- 0; v <- 0    # current location
+res.vec <- NULL   # result vector
+
+system.time(for (i in 1:n) {
+  a <- sample(1:100, size = 1, replace = T) # sample weight for current point/customer
+  x <- rnorm(1) #sample x coordinate
+  y <- rnorm(1) #sample y coordinate
+  res.vec[i] <- a *(abs(x-u)+abs(y-v)) #save Manhattan distance
+})
+
+# compare with results before
+
+# loop representing when scalar is passed
+   #user  system elapsed 
+  #22.64    0.09   23.48 
+
+#Vector is parsed very fast
+  # user  system elapsed 
+  # 0.00    0.00    0.02
+  
+# vectors of all kinds can be used to iterate over
+
+n <- 100
+iter.vec <- rep(c(T,F), times=n)# generate Logical vector to iterate over
+res.vec <- NULL  #result vector
+j <- 1      #index for result vector
+
+system.time(
+for (i in iter.vec) { #i is now logical
+  if(i){ # if i is TRUE ...
+    res.vec <- c(res.vec,j^2) #append squared j to result vector...
+    j <- j+1   #an increase j by 1
+  }else {
+    j <- 2*j     #otherwise double j
+  }
+  
+}
+)
+```
+
+
+
+# Exercise 2: 
+Try to fasten the code by initializing all data objects in the necessary size in advance.
+
+the difference between last code and this:
+last code $res.vec <- NULL \\$
+This code $res.vec <- numeric(n)$ by assigning it size, makes it fast though still slow compared to vectors.
+```{r}
+n <- 10^6        # number of trials
+u <- 0; v <- 0    # current location
+res.vec <- numeric(n)   # result vector this saves time
+
+system.time(for(i in 1:n){
+  a <- sample(1:100, size = 1, replace =T)    # sample weight for current point/customer
+  x <- rnorm(1)                   # sample x coordinate
+  y <- rnorm(1)                   # sample y coordinate
+  res.vec[i] <- a * (abs(x - u) + abs(y - v) )    # save Manhattan distance
+})
+```
+# 6.3.2 while-loops
+Condition checked has to be a logical scalar, infinite loop may occur in while loop, Therefore loop excess indicator should be implemented.
+```{r}
+n <- 10^6  #number of trials
+n.excess <- 10^6 * 1.5  #but no more than n.excess loops shall be executed.
+u <- 0; v <- 0 #current location
+i <- 1 # trial index
+j <- 0  #iteration counter
+res.vec <- NULL  #result vector
+
+system.time(
+  while(i<=n & j <= n.excess){# limit number of loops and number of trials simultaneously
+    j <- j + 1    #every time the loop starts, j is increased
+    a <- sample(1:100, size = 1, replace = T) # sample weight for current point/customer
+    if(a %% 2 == 1) next    #skip iteration if weight is odd
+    x <- rnorm(1)  #sample x coordinate
+    y <- rnorm(1)  #sample y coordinate
+    
+    res.vec[i] <- a*(abs(x-u) +abs(y-v)) #save Manhattan distance
+    i <- i+1  #i is only increased, if i is odd
+  }
+)
+length(res.vec) # check length of result vector
+```
+
+# Exercise 3:
+Can you simplify and fasten the code by sampling only odd numbers?
+
+```{r}
+n <- 10 ^6 #number of trials
+system.time({
+  ?seq
+  a.vec <- sample(seq(1,100, by=2),size = n, replace = T)
+  x.vec <- rnorm(n) #sample x coordinate
+  y.vec <- rnorm(n) #sample y coordinate
+  res.vec <- a*(abs(x)+abs(y))
+})
+```
+This demonstrates that sampling vectors are faster than scalar numbers.
+# 6.3.3  repeat-loops
+In repeat-loops the stopping criterion must be specified within the loop code.
+```{r}
+n <- 10^6          # number of trials
+n.excess <- 10^6 * 1.5    # but no more then n.excess loops shall be executed
+u <- 0; v <- 0      # current location
+i <- 1              # trial index 
+j <- 0              # iteration counter
+res.vec <- NULL     # result vector
+
+system.time(
+  repeat{  # limit number of loops and number of trials simultaneously
+    j <- j + 1                      # every time the lopp starts, j is increased
+    if(j > n.excess) break          # stop loop, if j exceeds n.excess
+    a <- sample(1:100, size = 1, replace =T)    # sample weight for current point/customer
+    if(a %% 2 == 1) next            # skip iteration if weight is odd
+    x <- rnorm(1)                   # sample x coordinate
+    y <- rnorm(1)                   # sample y coordinate
+    res.vec[i] <- a * (abs(x - u) + abs(y - v) )  # save Manhattan distance
+    i <- i+1                        # i is only increased, if i is odd
+    if(i > n) break                 # stop loop, if i exceeds n
+  }
+)
+```
+
+# Exercise 4: 
+
+Can you reformulate the stopping criteria such that only one break-statement is necessary? 
+```{r}
+n <- 10^6 # number of trials
+n.excess <- 10^6 * 1.5 # but no more then n.excess loops
+u <- 0; v <- 0 # current location
+i <- 1 # trial index
+j <- 0 # iteration counter
+res.vec <- numeric(n) # result vector
+system.time(repeat{
+j <- j + 1
+if(i > n | j > n.excess) break # joint break statement
+a <- sample(1:100, size = 1, replace =T) # sample weight
+if(a %% 2 == 1) next # skip iteration
+x <- rnorm(1) # sample x coordinate
+y <- rnorm(1) # sample y coordinate
+res.vec[i] <- a * (abs(x - u) + abs(y - v) )
+i <- i+1
+})
+```
+
+# Exercise 5:
+
+Formulate a loop that calculates the inventory records over n periods based on an initial stock level
+(say i0 = 20) where every 4 periods 40 units arrive at the inventory. Sample the demand for each period
+from a normal distribution with $D$~$N(10, 2)$ and round to integers.
+```{r}
+n <- 50
+i.vec <- numeric(n)
+d.vec <- round(rnorm(n,mean=10, sd=2)) #since mean demand is 10
+d.vec # vector of 50 demands from customers.
+#30-d.vec[1] is around 20 stocks as initial stock level.
+i.vec[1] <- 30 - d.vec[1]
+for (i in 2: n) {
+  if(i %% 4 == 0){ # at each 4th period
+    #i.vec[i-1] stock the previous day, 
+    #d.vec[i] demand for that day,
+    # new stock of 40 units is added
+    i.vec[i]<- i.vec[i-1]-d.vec[i] + 40
+  } 
+  else{
+    i.vec[i] <- i.vec[i-1]- d.vec[1]
+  }
+}
+?ylim
+{plot(1:n,i.vec, xlab = "time/periods", ylab = "stock level/demand", type = "s", lwd=2,ylim = c(0,60)) #period vs inventory stock
+lines(1:n, d.vec, type = "s", col="red",lwd=2)#period vs demand
+legend("topright", col=c("black","red"), legend = c("stock", "demand"), bty = "n")
+}
+```
+lecture:
+```{r}
+n <- 50
+i.vec <- numeric(n)
+d.vec <- round(rnorm(n, mean = 10, sd = 2))
+i.vec[1] <- 30 - d.vec[1]
+for(i in 2:n){
+if(i %% 4 == 0){
+i.vec[i] <- i.vec[i-1] - d.vec[i] + 40
+}
+else{
+i.vec[i] <- i.vec[i-1] - d.vec[i]
+}
+}
+plot(1:n, i.vec, xlab="time/periods", ylab="stock level/demand", type="s", lwd=2)
+lines(1:n, d.vec, type="s", col="red", lwd=2)
+legend("topright", col=c("black","red"), legend = c("stock", "demand"), bty = "n")
+```
+
+# Exercise 6:
+Consider a dynamic lot sizing problem with ordering cost of co = 100 and a holding cost rate ch = 0.1 $
+per period and unit. The demand over 10 periods is sampled from a Possion distribution with $\lambda = 10$
+(use rpois()). Calculate the total cost matrix with R.
+
+$\sum_{i=1}^n(\sum_{j=1}^{n-i-1} d.vec_{i,j})*ch +co$
+
+```{r}
+n <- 10 # period
+d.vec <- rpois(n, lambda = 10)
+d.vec
+c.mat <- matrix(NA, ncol=n, nrow = n) #n by n matrix
+c.h <- 0.5
+c.o <- 100
+for(i in 1 : n){#row
+  c.mat[i,i:n] <- cumsum(0:(n-i)* d.vec[i:n]) * c.h + c.o
+}
+c.mat
+```
+
+# Exercise 7:
+
+Formulate a function that performs 1st-order exponential smoothing:
+$p_{t+1} =\alpha \times x_t + (1- \alpha) \times p_t$
+. Is there also an builtin function? If so, compare run times.
+```{r}
+first.exsm <- function(alpha, d, p.ini){
+  n <-length(d)
+  p <- numeric(n+1)
+  p[1] <- p.ini
+  for(i in 1:n){
+    p[i+1] <- (1-alpha) * p[i] + alpha * d[i]
+  }
+  return(p)
+}
+```
+

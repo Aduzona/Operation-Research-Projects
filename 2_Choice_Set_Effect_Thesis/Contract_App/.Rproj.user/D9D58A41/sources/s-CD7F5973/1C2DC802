@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1642717702374.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "1C2DC802",
+    "lastKnownWriteTime" : 1620171842,
+    "last_content_update" : 1620171842,
+    "path" : "C:/Users/aduzo/Google Drive/Magdeburg/SEMESTER 6/Thesis/Contract_App/app2.R",
+    "project_path" : "app2.R",
+    "properties" : {
+        "cursorPosition" : "41,23",
+        "scrollLine" : "37",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

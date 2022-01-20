@@ -1,0 +1,280 @@
+---
+title: "5. Plotting"
+author: "Diego Uchendu"
+date: "10/05/2020"
+output: html_document
+---
+#5.1 Basic plotting routines
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Very simple scatter plot
+```{r}
+n <- 50 #number of points to plot
+x <- rnorm(n)#random density distribution function for normal distribution
+y <- rnorm(n) #independent y coordinates
+plot(x,y, xlab = "x", ylab="y")# xlab and ylab define axis labels
+```
+
+#a still simple data set
+
+
+
+```{r}
+n <- 50 #number of points to plot
+x <- rnorm(n,10,2)# mean=10 std=2 
+y <- 2*x + rnorm(n,0,sqrt(x)) #linearly dependent y coordinates with heteroscedastic errors
+
+?par
+par(mfrow =c(1,2))#set up a device with 2 plots
+
+?plot
+#"p" for points,"l" for lines, "b" for both,
+
+plot(x,y, xlab ="x",ylab = "y", type = "l", main ="unstructured" ) # one can also plot lines and a title
+#order arranges indexes according to there values ascending or descending order.
+#x[order(x)]
+plot(x[order(x)],y[order(x)],xlab = "x",ylab = "y",type = "b", main = "structured")# as well as points and lines
+?lm#fitting linear regression models
+lin.reg <-lm(y~x)
+abline(lin.reg,col="red",lwd=2)# and plot the regression line
+mtext(text = paste("est. regression: ", round(lin.reg$coefficients[1],1), "+", round(lin.reg$coefficients[2],1), "*x", sep = ""), side = 3) # and add the formula as text
+```
+
+## Exercise 1:
+Sample 100 observations in the range [−3,3] from the following model and plot the sample:
+$y=sin(3*x^2-4)*x+0.5+ϵ$ 
+whereby $ϵ ~ N(0,0.5)$ Can you estimate a regression function?
+
+runif(n,min=-3,max=3) random uniform distribution
+```{r}
+n<- 100 #number of points to plot
+x <- runif(n,min = -3, max=3) #100 x coordinates
+y <- sin(3*x^2 -4)*x + 0.5* x + rnorm(n,mean = 0,sd=sqrt(.5))
+?plot
+#pch is plot character 0 to 20 is black color,
+#pch 24 is triangle
+plot(x[order(x)], y[order(x)], xlab = "x", ylab = "y", pch=20)
+lin.reg <- lm(y~x) #fit a linear regression model
+abline(lin.reg,col="red",lwd=2)# ... and plot the regression line
+```
+
+#plot a normal distribution
+```{r}
+man.norm <- function(x,mu=0,sigma=1)1/sqrt(2 * pi * sigma^2) * exp(-(x-mu)^2/2/sigma^2)     # density function normal distribution, self-written, default to standard normal
+n <- 100
+x <- seq(-3,3, length.out = n)# set plotting range (-3,3) and sample n equally spaced points
+y <- man.norm(x) #calculate density at x-values
+par(mfrow=c(1,2)) #set up a device with 2 plots
+plot(x,y, xlab = "x", ylab = "density", type ="l", main = "stand. normal density (self-written)")  
+curve(dnorm, from = -3, to= 3, main="stand. normal density (built-in)")
+```
+
+## Exercise 2: 
+Plot the EOQ model in an appropriate range.
+#EOQ function
+```{r}
+#cost function
+cost_eoq_fun <- function(q, d, co, cl) {
+  # returns total cost per period
+  # d...demand
+  # q...lot size
+  # co...ordering cost
+  # cl...stock holding cost
+  ((1/2)*cl*q)+((d/q)*co)
+}
+
+#economic ordering quantity function
+eoq_fun <- function(co, d, cl) {
+  # return optimal lot size
+  # d...demand
+  # co...ordering cost
+  # cl...stock holding cost
+  sqrt((2*co*d)/cl)
+}
+
+
+
+```
+#plotting
+```{r}
+q.vec<- seq(265, 365, length.out = 100) #quantity vector setting plotting range for x axis
+y.vec <- cost_eoq_fun(q=q.vec,d=100, cl=.1,co= 50)#the  EOQ function
+
+
+#abline adds 1 or more straight lines on the current plot
+?plot.new()
+
+#line type (lty) can be specified using either text (“blank”, “solid”, “dashed”, “dotted”, “dotdash”, “longdash”, “twodash”) or number (0, 1, 2, 3, 4, 5, 6). Note that lty = “solid” is identical to lty=1.
+
+#lwd is line width 
+plot(q.vec, y.vec, xlab = "lot size q", ylab = "total cost", type = "l",lwd=2)+ abline(v= eoq_fun(d=100, cl=.1, co=50), col="darkgrey",lwd=2,lty=2)
+
+
+
+```
+In the above plot EOQ is at the grey line.
+
+## Exercise 3:
+Plot the newsvendor model in an appropriate range
+The total cost in the normal newsvendor model is given by
+$$Z(q)= (c_u + c_o)\times σ \times(φ(q')+q'\times Φ (q'))-c_u \times(q-\mu)$$
+with $$q' =\frac{(q-μ)}σ$$
+
+dnorm= density normal distribution
+pnorm= normal distribution function 
+```{r}
+newsven_obj_fun <- function(x, cu,co,mu,sigma){
+  q.prime <- (x-mu)/sigma
+         (cu + co) * sigma * (dnorm(q.prime) + q.prime * pnorm(q.prime)) - cu * sigma * q.prime
+
+}
+q.vec <- seq(110, 125, length.out = 100) # x axis
+cost.vec <- newsven_obj_fun(x=q.vec, mu = 100, cu=2, co= 0.5, sigma = 20) #yaxis
+
+plot(q.vec, cost.vec, xlab ="lot size q", ylab = "total cost", type = "l", lwd = 2)
+
+```
+
+#overlay  different plots.
+```{r}
+#plot a normal distribution
+n <- 50 #sample size
+x <- rnorm(n) #sample from standard normal distribution
+est.mu<- mean(x) #estimate mean
+est.sd <- sd(x)  #estimate standard deviation
+
+#plot histogram with density (default plots frequencies), specify plot range explicitely
+hist(x, freq = FALSE,ylim = c(0,0.5),xlim = c(-3,3),main= paste("Histogram of x, sample size =", n) )
+
+
+#add theoretical density
+#add=TRUE means add to already existing plot
+curve(dnorm,from = -3, to = 3, col="red")
+
+#add estimated density
+{curve(1/sqrt(2 * pi * est.sd^2) * exp(-(x - est.mu)^2/2/est.sd^2), from = -3, to = 3, col = "blue", add = TRUE) 
+legend("topleft" , bty="n", col=c("blue","red"), lwd =c(1,1), legend = c("estimated density", "theoretical density"))}
+#topleft is position of the legend
+```
+
+## Exercise 4:
+Plot the EOQ model in an appropriate range and add holding cost function and ordering cost function in different colors. Add a legend to the plot.
+```{r}
+q.vec <- seq(265, 365, length.out = 100)
+y.vec <- cost_eoq_fun(q = q.vec , d = 100, cl = .1, co = 50)
+{plot(q.vec, y.vec, xlab ="lot size q", ylab = "total cost", type = "l", lwd =2, ylim=c(12,max(y.vec)))+abline(v = eoq_fun(d = 100, cl = .1, co = 50), col="darkgrey", lwd=2, lty=2)+lines(x=q.vec, y=(1/2)*.1*q.vec, lwd=2, col="blue")+lines(x=q.vec, y=(100/q.vec)*50, lwd=2, col="red")
+legend("topleft", lty = c(1,1,1,2), col = c("black","red","blue","darkgrey"), legend = c("total cost", "ordering cost", "storage cost", "optimal lot size"), bty="n" )}
+```
+
+## Exercise 5:
+Consider the in the joint economic lot size model. Supplier and customer face setup costs 
+$(c_{set}^{sup},c_{set}^{cust})$ as well as stock-holding cost rates $(c_{sh}^{sup},c_{sh}^{cust})$ The demand rate of the customers is λ and production rate of the supplier is μ (with λ < μ). The cost functions of supplier and customer are:
+$C^{cust}(q) =\frac{λ}{q}\times c_{set}^{cust} + c_{sh}^{cust}\times \frac{q}{2}$
+and
+$C^{supp}(q) =\frac{λ}{q}\times c_{set}^{sup} + c_{sh}^{sup}\times \frac{q}{2}\times \frac{λ}{μ}$
+Plot the cost functions of supplier, customer, and the SC (i.e., total cost function) in different colors. Add a legend to the plot.
+
+#which.min= index of the first minimum of numeric or logical vector
+```{r}
+jel_func <- function(q, c.supp.set, c.supp.sh, c.cust.set, c.cust.sh, lambda, mu){
+  #costs in joint exonomic lot sizing model
+  if(lambda > mu) stop("infeasible(lambda > mu)")#check feasibility
+  c.cust <- lambda/q * c.cust.set + c.cust.sh * q/2
+  c.supp <-  lambda/q * c.supp.set  + c.supp.sh * q/2 * lambda/mu
+  c.sc <- c.supp + c.cust
+  return(data.frame(cost.customer = c.cust, cost.supplier = c.supp, cost.sc = c.sc))
+}
+
+q.vec <- seq(50,200, length.out = 100)#x_axis
+is.vector(q.vec)# this is a vector thats is columnwise also its an independent variable
+y.df <- jel_func(q = q.vec, c.supp.set = 240, c.supp.sh = 4, c.cust.set = 100, c.cust.sh = 5, lambda = 100, mu = 160)
+
+{plot(x=q.vec, y.df$cost.sc, xlab = "lot_size q",ylab = "costs",type = "l",lwd=2,ylim = range(y.df))+
+  lines(x = q.vec, y = y.df$cost.customer, lwd = 2, col = "blue")+
+  lines(x = q.vec, y = y.df$cost.supplier, lwd = 2, col = "red")+
+  abline(v=q.vec[which.min(y.df$cost.customer)],col="blue",lwd=1, lty=2)+
+  abline(v = q.vec[which.min(y.df$cost.supplier)], col = "red", lwd = 1, lty = 2)+
+  abline(v = q.vec[which.min(y.df$cost.sc)], col = "darkgrey", lwd = 1, lty = 2)
+  
+legend("top", lty = c(1,1,1,2), col = c("black","red","blue","darkgrey"), legend = c("SC", "supplier", "customer", "opt. q"),bty = "n",horiz = T)}
+
+```
+Overlays are also useful when plots should be customized.
+```{r}
+#plot a normal distribution with annotation
+n<- 1000 # set number of points for function plotting
+x <- seq(-4, 4, length.out = n)         # set plotting range (-4,4) 
+y <- dnorm(x)  # calculate density at x-values
+q95 <- qnorm(0.95) #density distributed function, quantile function and random generated for normal distribution
+x.sub <- x[x>q95] #subset with x > 95%-quantile
+y.sub <- y[x>q95] #subset of corresponding density values
+# close polygon by adding point (q95, 0)
+x.sub <- c(x.sub, q95)                  
+y.sub <- c(y.sub, 0)
+
+#plot density
+{plot(x, y, xlab ="x", ylab = "density", type ="l", main = "stand. normal density with 95% quantile")+polygon(x.sub, y.sub, col="red")                    # highlight 5%-area  
+abline(v = q95, col ="darkgrey", lty = 2, lwd= 2)   # highlight coordinate of 95% quantile as grey, dashed line
+
+par(xpd = TRUE)                                     # change device, allows annotations outside plot area
+text(x = q95, y = -.0375, labels = paste("95%-quantile =", round(q95,2)))  # add text to axis
+}
+```
+
+## Exercise 6:
+Consider the contract design problem with buy-back option (Thonemann, 2010, p. 479). Given are unit cost per product unit $c$ of the supplier, the sales price of the supplier $w$, the sales price of retailer $r$, the scrap revenue $v$ of the SC as well as normally distributed demand with $y$~$N(\mu,\sigma^2)$. To be determined is the buy-back price $b$ such that the optimal profit of the SC is generated. The optimal SC profit is obtained if the retailer orders $q=\mu +\sigma \times \Phi^{-1} (CR)$ $CR= Critical Ratio$units, whereby  $CR = \frac{r-c}{r-v}$ is the SC's critical ratio. For the optimizing buy-back rice $b$ holds:
+$b(w)=-r\times \frac{c-v}{r-c}+w\times \frac{r-v}{r-c}$
+
+The profits of retailer and supplier in case of optimal combinations of $b$ and $w$ holds $\\$
+$G^{ret.}(w) = (r-w)\times \mu-(r-b)\times \sigma \times \Phi^{-1} (CR)\\$
+and $\\$ 
+$G^{sup.}(w) = (w-c)\times \mu-(b-v)\times \sigma \times \Phi^{-1} (CR)\\$
+Plot the profit functions of retailer and supplier as well as the buy-back price function depending on $w \\$.
+
+$c= unit \space Cost \space per \space product \space  unit \space of \space supplier \\$
+$w=$wholesale or supplier price$\\$ 
+$r=$retailers sales price $\\$
+$v=$ scrap revenue of SC(supplier and customer)$\\$
+$b=$ buy back Price$\\$
+$CR=$critical ratio SC $\\$
+$G^{ret.}(w)=$ retailer or customer profit given $b$ and $w \\$
+$G^{sup.}(w)=$ supplier or wholesaler profit given $b$ and $w \\$
+#buy back function contains = {buy back price,profit of supplier, profit of customer, profit of supplier and customer}
+
+```{r}
+buy_back_func <- function(w, r, c, v, mu, sigma){
+  # costs & buy-back price in buy-back model
+  crit.rat.sc <- (r-c)/(r-v) # critical ratio SC
+  z.sc <- qnorm(crit.rat.sc)#Density distrib func and quantile function and random generation. 
+  b <- -(c-v)/(r-c)*r + (r-v)/(r-c)*w
+  profit.cust<- (r-w)*mu - (r-b)*dnorm(z.sc)* sigma
+  profit.supp <- (w-c)*mu - (b-v)*dnorm(z.sc)* sigma
+  return(data.frame(buy.back.price = b, profit.supplier = profit.supp, profit.cust = profit.cust, profit.sc = profit.cust+profit.supp ))
+}
+w.vec <- seq(150, 250, length.out = 100)
+y.df <-  buy_back_func(w = w.vec, c = 100, r = 300, v = 10, mu = 100, sigma = 30)
+
+#mar = A numerical vector of the form c(bottom, left, top, right) which gives the number of lines of margin to be specified on the four sides of the plot. The default is c(5, 4, 4, 2) + 0.1.
+par(mar=c(4,4,.1,4))
+?ylim #coordinate system for a graphic window
+?range#returns the min and max of all arguments
+
+{plot(w.vec, y.df$profit.sc, xlab ="price w", ylab = "profit", type = "l", lwd = 2,ylim = range(c(y.df$profit.supplier,y.df$profit.cust,y.df$profit.sc)))
+lines(x = w.vec, y = y.df$profit.cust, lwd = 2, col = "blue")
+lines(x = w.vec, y = y.df$profit.supplier, lwd = 2, col = "red")
+# second axis
+#new=T where T is TRUE enables ploting graph on top of another graph
+par(new=T)
+# data without axis
+??xaxt 
+plot(w.vec, y.df$buy.back.price, xaxt = "n", yaxt = "n", ylab="", xlab = "", type = "l", lwd = 2, col = "darkgrey", lty = 2)
+axis(4) # add axis 
+mtext( "Buy back price b", side  = 4, line = 2)  # add label
+legend("bottomleft", col = c("black","red","blue", "darkgrey"), lty=c(1,1,1,2), lwd=2, legend = c("SC", "supplier", "customer","buy-back price"), bty="n")
+}
+
+```
+
+## 5.2 ggplots
+

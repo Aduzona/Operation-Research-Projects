@@ -1,0 +1,1190 @@
+\PassOptionsToPackage{unicode=true}{hyperref} % options for packages loaded elsewhere
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provides euro and other symbols
+\else % if luatex or xelatex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={coordinated\_ordering4},
+  pdfauthor={GroupB},
+  pdfborder={0 0 0},
+  breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs}
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-2}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+  \let\oldparagraph\paragraph
+  \renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+  \let\oldsubparagraph\subparagraph
+  \renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+% set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+
+\title{coordinated\_ordering4}
+\author{GroupB}
+\date{24/06/2020}
+
+\begin{document}
+\maketitle
+
+\hypertarget{data-preparation}{%
+\section{Data preparation}\label{data-preparation}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(readxl)}
+\CommentTok{#setwd("C:\textbackslash{}\textbackslash{}Users\textbackslash{}\textbackslash{}Thomas\textbackslash{}\textbackslash{}Documents\textbackslash{}\textbackslash{}Thomas\textbackslash{}\textbackslash{}Owncloud\textbackslash{}\textbackslash{}Data_Science_PL\textbackslash{}\textbackslash{}datasets\textbackslash{}\textbackslash{}coordinated ordering\textbackslash{}\textbackslash{}Code_group")}
+\NormalTok{product_data <-}\StringTok{ }\KeywordTok{read_excel}\NormalTok{(}\StringTok{"Data_ordering.xlsx"}\NormalTok{,}\DataTypeTok{sheet =} \StringTok{"product data"}\NormalTok{)}
+\NormalTok{box_data <-}\StringTok{ }\KeywordTok{read_excel}\NormalTok{(}\StringTok{"Data_ordering.xlsx"}\NormalTok{,}\DataTypeTok{sheet =} \StringTok{"box data"}\NormalTok{)}
+\CommentTok{#rack data}
+\NormalTok{Total_racks=}\DecValTok{8}
+\NormalTok{levels_per_rack=}\DecValTok{4}
+\NormalTok{rack_length=}\StringTok{ }\DecValTok{6000}
+\NormalTok{rack_width=}\DecValTok{1750}
+\NormalTok{rack_height=}\DecValTok{300}
+
+\NormalTok{product_data}\OperatorTok{$}\NormalTok{demand_per_year=}\StringTok{ }\KeywordTok{ceiling}\NormalTok{((product_data}\OperatorTok{$}\StringTok{`}\DataTypeTok{demand per day}\StringTok{`} \OperatorTok{*}\DecValTok{365}\NormalTok{)}\OperatorTok{/}\StringTok{ }\NormalTok{product_data}\OperatorTok{$}\StringTok{`}\DataTypeTok{pieces/box}\StringTok{`}\NormalTok{)}
+
+\NormalTok{product_data}\OperatorTok{$}\NormalTok{box_cost=}\StringTok{ }\NormalTok{product_data}\OperatorTok{$}\StringTok{`}\DataTypeTok{pieces/box}\StringTok{`} \OperatorTok{*}\StringTok{ }\NormalTok{product_data}\OperatorTok{$}\NormalTok{price}
+
+\NormalTok{product_data}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 62 x 7
+##    `material ID` `demand per day` `box ID` `pieces/box` price demand_per_year
+##    <chr>                    <dbl>    <dbl>        <dbl> <dbl>           <dbl>
+##  1 7305667+74                  12  6203060           45  1.51              98
+##  2 7305669+77                  30  6203059           15  7.62             730
+##  3 7305670+77                  30  6203059           15  1.62             730
+##  4 7305673+76                  30  6203059           16  1.51             685
+##  5 7305674+76                  30  6203059           16  1.51             685
+##  6 7305817+74                  60  6203060           16  4.55            1369
+##  7 7305819+79                  30  6203059            6 11.1             1825
+##  8 7305820+79                  30  6203059            6  2.86            1825
+##  9 7305823+73                  30  6203059           30  4.05             365
+## 10 7305824+73                  30  6203059           30  2.56             365
+## # ... with 52 more rows, and 1 more variable: box_cost <dbl>
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# shortcut ordering cost}
+
+\NormalTok{product_data <-}\StringTok{ }\KeywordTok{merge}\NormalTok{(product_data, box_data[,}\KeywordTok{c}\NormalTok{(}\StringTok{"box ID"}\NormalTok{, }\StringTok{"ordering cost (€)"}\NormalTok{)], }\DataTypeTok{by =} \StringTok{"box ID"}\NormalTok{)}
+
+\KeywordTok{colnames}\NormalTok{(product_data)[}\DecValTok{8}\NormalTok{] <-}\StringTok{ "ordering_cost"}
+
+\CommentTok{# order_cost <- double(length(product_data$`box ID`))}
+\CommentTok{# }
+\CommentTok{# for(j in 1: length(box_data$`box ID`))\{}
+\CommentTok{#   for (k in 1:length(product_data$`box ID`)) \{}
+\CommentTok{#     if(box_data$`box ID`[j]==product_data$`box ID`[k])\{}
+\CommentTok{#       order_cost[k] <- box_data$`ordering cost (€)`[j]}
+\CommentTok{#     \}}
+\CommentTok{#   \}}
+\CommentTok{#   }
+\CommentTok{# \}}
+\CommentTok{# }
+\CommentTok{# product_data$ordering_cost <- order_cost }
+\CommentTok{# product_data}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{eoq-modelling}{%
+\section{EOQ modelling}\label{eoq-modelling}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#dei= demand_per_year, cori= ordering cost for box i}
+\CommentTok{#cord= ordering cost, pri= box cost, h= interest rate}
+
+\CommentTok{# directly vectorized}
+\NormalTok{so_eoq_fun <-}\StringTok{ }\KeywordTok{Vectorize}\NormalTok{(}\ControlFlowTok{function}\NormalTok{(dei,cori,cord,pri,h)\{}
+\NormalTok{  eoq<-}\StringTok{ }\KeywordTok{sqrt}\NormalTok{((}\DecValTok{2}\OperatorTok{*}\NormalTok{dei}\OperatorTok{*}\NormalTok{(cori}\OperatorTok{+}\NormalTok{cord))}\OperatorTok{/}\NormalTok{(pri}\OperatorTok{*}\NormalTok{h))}
+  \KeywordTok{return}\NormalTok{(eoq)}
+\NormalTok{\})}
+
+\CommentTok{# maximum EOQ provided there is no coordination of ordering cycles (i.e., cord are not shared among parallely ordered items)}
+\NormalTok{vec_so_eoq_fun.max <-}\StringTok{ }\KeywordTok{so_eoq_fun}\NormalTok{(}\DataTypeTok{dei =}\NormalTok{ product_data}\OperatorTok{$}\NormalTok{demand_per_year,}\DataTypeTok{cori=}\NormalTok{product_data}\OperatorTok{$}\NormalTok{ordering_cost,}\DataTypeTok{cord=}\DecValTok{1500}\NormalTok{,}\DataTypeTok{pri=}\NormalTok{product_data}\OperatorTok{$}\NormalTok{box_cost,}\DataTypeTok{h=}\FloatTok{0.10}\NormalTok{)}
+\CommentTok{# minimum EOQ disregarding common ordering cost cord}
+\NormalTok{vec_so_eoq_fun.min <-}\StringTok{ }\KeywordTok{so_eoq_fun}\NormalTok{(}\DataTypeTok{dei =}\NormalTok{ product_data}\OperatorTok{$}\NormalTok{demand_per_year,}\DataTypeTok{cori=}\NormalTok{product_data}\OperatorTok{$}\NormalTok{ordering_cost,}\DataTypeTok{cord=}\DecValTok{0}\NormalTok{,}\DataTypeTok{pri=}\NormalTok{product_data}\OperatorTok{$}\NormalTok{box_cost,}\DataTypeTok{h=}\FloatTok{0.10}\NormalTok{)}
+
+\NormalTok{product_data}\OperatorTok{$}\NormalTok{eoq.min <-}\StringTok{ }\KeywordTok{round}\NormalTok{(vec_so_eoq_fun.min)}
+\NormalTok{product_data}\OperatorTok{$}\NormalTok{eoq.max <-}\StringTok{ }\KeywordTok{round}\NormalTok{(vec_so_eoq_fun.max)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{lane-occupation}{%
+\section{Lane occupation}\label{lane-occupation}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# constraints #####################################}
+\CommentTok{# this can be formulated more elegantly, but it works and that suffices}
+\NormalTok{b_sorting <-}\StringTok{ }\KeywordTok{double}\NormalTok{(}\KeywordTok{length}\NormalTok{(product_data}\OperatorTok{$}\StringTok{`}\DataTypeTok{box ID}\StringTok{`}\NormalTok{)) }
+\NormalTok{b_not_sorting <-}\KeywordTok{double}\NormalTok{(}\KeywordTok{length}\NormalTok{(product_data}\OperatorTok{$}\StringTok{`}\DataTypeTok{box ID}\StringTok{`}\NormalTok{))}
+
+\ControlFlowTok{for}\NormalTok{(j }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\StringTok{ }\KeywordTok{length}\NormalTok{(box_data}\OperatorTok{$}\StringTok{`}\DataTypeTok{box ID}\StringTok{`}\NormalTok{))\{}
+  \ControlFlowTok{for}\NormalTok{ (k }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\KeywordTok{length}\NormalTok{(product_data}\OperatorTok{$}\StringTok{`}\DataTypeTok{box ID}\StringTok{`}\NormalTok{)) \{}
+    \ControlFlowTok{if}\NormalTok{(box_data}\OperatorTok{$}\StringTok{`}\DataTypeTok{box ID}\StringTok{`}\NormalTok{[j]}\OperatorTok{==}\NormalTok{product_data}\OperatorTok{$}\StringTok{`}\DataTypeTok{box ID}\StringTok{`}\NormalTok{[k])\{}
+      
+      \ControlFlowTok{if}\NormalTok{(box_data}\OperatorTok{$}\NormalTok{sorting[j]}\OperatorTok{==}\StringTok{"width"}\NormalTok{)\{}
+\NormalTok{        b_sorting[k] <-}\StringTok{ }\NormalTok{box_data}\OperatorTok{$}\NormalTok{width[j]}
+\NormalTok{        b_not_sorting[k]<-}\StringTok{ }\NormalTok{box_data}\OperatorTok{$}\NormalTok{length[j]}
+        
+\NormalTok{      \}}\ControlFlowTok{else}\NormalTok{\{}
+\NormalTok{        b_sorting[k] <-}\StringTok{ }\NormalTok{box_data}\OperatorTok{$}\NormalTok{length[j]}
+\NormalTok{        b_not_sorting[k]<-}\StringTok{ }\NormalTok{box_data}\OperatorTok{$}\NormalTok{width[j]}
+\NormalTok{      \}}
+\NormalTok{    \}}
+\NormalTok{  \}}
+  
+\NormalTok{\}}
+
+\NormalTok{product_data}\OperatorTok{$}\NormalTok{b_sorting <-}\StringTok{ }\NormalTok{b_sorting }
+\NormalTok{product_data}\OperatorTok{$}\NormalTok{b_not_sorting <-}\StringTok{ }\NormalTok{b_not_sorting}
+
+\NormalTok{lane.min <-}\StringTok{ }\KeywordTok{ceiling}\NormalTok{(product_data}\OperatorTok{$}\NormalTok{eoq.min }\OperatorTok{*}\StringTok{ }\NormalTok{product_data}\OperatorTok{$}\NormalTok{b_not_sorting }\OperatorTok{/}\StringTok{ }\NormalTok{rack_length)}
+\NormalTok{lane.max <-}\StringTok{ }\KeywordTok{ceiling}\NormalTok{(product_data}\OperatorTok{$}\NormalTok{eoq.max }\OperatorTok{*}\StringTok{ }\NormalTok{product_data}\OperatorTok{$}\NormalTok{b_not_sorting }\OperatorTok{/}\StringTok{ }\NormalTok{rack_length)}
+
+\CommentTok{# total rack width }
+
+\NormalTok{rack_total_width <-}\StringTok{ }\NormalTok{rack_width }\OperatorTok{*}\StringTok{ }\DecValTok{4} \OperatorTok{*}\StringTok{ }\DecValTok{8}
+
+\CommentTok{# overflow in mm}
+\KeywordTok{sum}\NormalTok{(lane.min}\OperatorTok{*}\NormalTok{product_data}\OperatorTok{$}\NormalTok{b_sorting) }\OperatorTok{-}\StringTok{ }\NormalTok{rack_total_width}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 265020
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{sum}\NormalTok{(lane.max}\OperatorTok{*}\NormalTok{product_data}\OperatorTok{$}\NormalTok{b_sorting) }\OperatorTok{-}\StringTok{ }\NormalTok{rack_total_width}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 1385682
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# relative overflow in %}
+\NormalTok{(}\KeywordTok{sum}\NormalTok{(lane.min}\OperatorTok{*}\NormalTok{product_data}\OperatorTok{$}\NormalTok{b_sorting) }\OperatorTok{-}\StringTok{ }\NormalTok{rack_total_width)}\OperatorTok{/}\NormalTok{rack_total_width}\OperatorTok{*}\DecValTok{100}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 473.25
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{(}\KeywordTok{sum}\NormalTok{(lane.max}\OperatorTok{*}\NormalTok{product_data}\OperatorTok{$}\NormalTok{b_sorting) }\OperatorTok{-}\StringTok{ }\NormalTok{rack_total_width)}\OperatorTok{/}\NormalTok{rack_total_width}\OperatorTok{*}\DecValTok{100}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 2474.432
+\end{verbatim}
+
+\hypertarget{constrained-eoq-optimization}{%
+\section{Constrained EOQ
+optimization}\label{constrained-eoq-optimization}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(ROI)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## ROI: R Optimization Infrastructure
+\end{verbatim}
+
+\begin{verbatim}
+## Registered solver plugins: nlminb, alabama, glpk, quadprog, symphony.
+\end{verbatim}
+
+\begin{verbatim}
+## Default solver: auto.
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(ROI.plugin.alabama)}
+
+\NormalTok{n <-}\StringTok{ }\KeywordTok{length}\NormalTok{(product_data}\OperatorTok{$}\StringTok{`}\DataTypeTok{material ID}\StringTok{`}\NormalTok{) }\CommentTok{#number of materials}
+\NormalTok{cori <-}\StringTok{ }\NormalTok{product_data}\OperatorTok{$}\NormalTok{ordering_cost   }\CommentTok{#ordering cost for each items}
+\NormalTok{cord <-}\StringTok{  }\DecValTok{1500}    \CommentTok{#ordering cost whenever there is an order}
+\NormalTok{dei <-}\StringTok{ }\NormalTok{product_data}\OperatorTok{$}\NormalTok{demand_per_year}
+\NormalTok{h<-}\FloatTok{0.10}
+\NormalTok{box_cost <-}\StringTok{ }\NormalTok{product_data}\OperatorTok{$}\NormalTok{box_cost }\CommentTok{#pri}
+
+\CommentTok{# objective function --> I dropped the 1500*62 as it is not decision relevant}
+\NormalTok{obj.fun <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(q, }\DataTypeTok{d=}\NormalTok{ dei, }\DataTypeTok{c.or =}\NormalTok{ cori, }\DataTypeTok{c.h =}\NormalTok{ h}\OperatorTok{*}\NormalTok{box_cost  ) (}\KeywordTok{sum}\NormalTok{((dei}\OperatorTok{/}\NormalTok{q)}\OperatorTok{*}\NormalTok{c.or)}\OperatorTok{+}\StringTok{ }\KeywordTok{sum}\NormalTok{(c.h}\OperatorTok{*}\NormalTok{(q}\OperatorTok{/}\DecValTok{2}\NormalTok{)))}
+\CommentTok{# benchmarks}
+\KeywordTok{obj.fun}\NormalTok{(product_data}\OperatorTok{$}\NormalTok{eoq.max)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 93552.72
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{obj.fun}\NormalTok{(product_data}\OperatorTok{$}\NormalTok{eoq.min)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 37179.52
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# constraint function --> also contains the ceiling of lanes and a sum was missing}
+\NormalTok{const.fun <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(q, }\DataTypeTok{bns =}\NormalTok{ product_data}\OperatorTok{$}\NormalTok{b_not_sorting, }\DataTypeTok{bs =}\NormalTok{ product_data}\OperatorTok{$}\NormalTok{b_sorting, }\DataTypeTok{rl =}\NormalTok{ rack_length) \{}
+  \KeywordTok{sum}\NormalTok{(bs }\OperatorTok{*}\StringTok{ }\KeywordTok{ceiling}\NormalTok{( bns }\OperatorTok{*}\StringTok{ }\NormalTok{q }\OperatorTok{/}\StringTok{ }\NormalTok{rl))}
+\NormalTok{  \}}
+
+\KeywordTok{const.fun}\NormalTok{(product_data}\OperatorTok{$}\NormalTok{eoq.max)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 1441682
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{const.fun}\NormalTok{(product_data}\OperatorTok{$}\NormalTok{eoq.min)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 321020
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# try to figure out a freasible starting solution}
+\KeywordTok{const.fun}\NormalTok{(product_data}\OperatorTok{$}\NormalTok{eoq.min}\OperatorTok{/}\DecValTok{10}\NormalTok{) }\OperatorTok{-}\StringTok{  }\NormalTok{rack_total_width}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] -11616
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{qopt <-}\StringTok{ }\KeywordTok{OP}\NormalTok{(}
+  \DataTypeTok{objective =} \KeywordTok{F_objective}\NormalTok{(}\DataTypeTok{F=}\NormalTok{obj.fun ,}\DataTypeTok{n=}\NormalTok{n),}
+  \DataTypeTok{types =} \KeywordTok{rep}\NormalTok{(}\StringTok{"C"}\NormalTok{,n),}
+  \DataTypeTok{bounds =} \KeywordTok{V_bound}\NormalTok{(}\DataTypeTok{ub=}\NormalTok{ product_data}\OperatorTok{$}\NormalTok{eoq.min , }\DataTypeTok{lb=} \KeywordTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, n)),}
+  \DataTypeTok{constraints =} \KeywordTok{F_constraint}\NormalTok{(}\DataTypeTok{F=}\NormalTok{const.fun,}
+                             \DataTypeTok{dir=}\StringTok{"<="}\NormalTok{,}
+                             \DataTypeTok{rhs =}\NormalTok{ rack_total_width)}
+\NormalTok{)}
+
+\CommentTok{#This shows that minimum EOQ is too big and therefore will not meet the rack space constraint.}
+\KeywordTok{const.fun}\NormalTok{(}\KeywordTok{min}\NormalTok{(product_data}\OperatorTok{$}\NormalTok{eoq.max))}\CommentTok{#366272}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 366272
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{const.fun}\NormalTok{(}\KeywordTok{min}\NormalTok{(product_data}\OperatorTok{$}\NormalTok{eoq.max)}\OperatorTok{/}\DecValTok{8}\NormalTok{)}\CommentTok{# 61428  still > 56000}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 61428
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{const.fun}\NormalTok{(}\KeywordTok{min}\NormalTok{(product_data}\OperatorTok{$}\NormalTok{eoq.max)}\OperatorTok{/}\FloatTok{8.7}\NormalTok{)}\CommentTok{#52716 < 56000}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 52716
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{const.fun}\NormalTok{(}\KeywordTok{round}\NormalTok{(}\KeywordTok{min}\NormalTok{(product_data}\OperatorTok{$}\NormalTok{eoq.max)}\OperatorTok{/}\DecValTok{10}\NormalTok{))}\CommentTok{# 52716 < 56000}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 52716
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{round}\NormalTok{(}\KeywordTok{min}\NormalTok{(product_data}\OperatorTok{$}\NormalTok{eoq.max)}\OperatorTok{/}\DecValTok{10}\NormalTok{) }\CommentTok{#17.3}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 17
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{copt_sol <-}\StringTok{ }\KeywordTok{ROI_solve}\NormalTok{(qopt, }\DataTypeTok{start =} \KeywordTok{rep}\NormalTok{(}\KeywordTok{min}\NormalTok{(product_data}\OperatorTok{$}\NormalTok{eoq.max)}\OperatorTok{/}\DecValTok{10}\NormalTok{,n), }\DataTypeTok{solver =} \StringTok{"alabama"}\NormalTok{ )}
+\CommentTok{# always check whether the algorithm converged}
+\NormalTok{copt_sol}\CommentTok{# The objective value is: 1.313873e+05}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Optimal solution found.
+## The objective value is: 1.313873e+05
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# solution}
+\NormalTok{copt_sol}\OperatorTok{$}\NormalTok{solution }\CommentTok{#vector of optimal Quantity that meets the space constraints and minimizes the Obj function.}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  [1] 21.66279 20.31187 20.20202 20.20202 22.26230 19.56183 21.21318 21.75544
+##  [9] 20.34675 20.27350 20.43514 19.37067 20.69117 20.44622 22.13843 21.24480
+## [17] 21.74630 19.73749 21.02594 20.94180 22.33984 21.74630 21.45676 20.46119
+## [25] 20.45948 20.39322 20.26114 19.76379 22.06522 19.90256 19.91548 21.26975
+## [33] 21.35903 20.45373 19.95107 19.37134 21.73364 21.73293 20.62620 22.32524
+## [41] 20.18546 19.92192 19.44841 19.96656 20.05178 22.32484 19.90874 19.61165
+## [49] 18.67540 22.03724 19.90662 20.20104 19.30820 18.57257 22.04138 19.27700
+## [57] 19.81062 22.06779 20.64364 20.00341 23.20392 23.14760
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{round}\NormalTok{(copt_sol}\OperatorTok{$}\NormalTok{solution)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  [1] 22 20 20 20 22 20 21 22 20 20 20 19 21 20 22 21 22 20 21 21 22 22 21 20 20
+## [26] 20 20 20 22 20 20 21 21 20 20 19 22 22 21 22 20 20 19 20 20 22 20 20 19 22
+## [51] 20 20 19 19 22 19 20 22 21 20 23 23
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{copt_sol}\OperatorTok{$}\NormalTok{objval }\CommentTok{#131387.3}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 131387.3
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#########################################}
+\CommentTok{# Now you need to fine tune the results }
+\CommentTok{# --> there are rounding issues -> exactly determining the lane configuration per shelf level}
+\CommentTok{# --> idea to coping with the common ordering cost}
+
+\KeywordTok{const.fun}\NormalTok{(copt_sol}\OperatorTok{$}\NormalTok{solution)}\CommentTok{#55884}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 55884
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{const.fun}\NormalTok{(}\KeywordTok{round}\NormalTok{(copt_sol}\OperatorTok{$}\NormalTok{solution))}\CommentTok{#55686}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 55686
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{obj.fun}\NormalTok{(copt_sol}\OperatorTok{$}\NormalTok{solution)}\CommentTok{#131387.3}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 131387.3
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{obj.fun}\NormalTok{(}\KeywordTok{round}\NormalTok{(copt_sol}\OperatorTok{$}\NormalTok{solution))}\CommentTok{#132096.3  rounded q values}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 132096.3
+\end{verbatim}
+
+\hypertarget{joint-ordering-jo}{%
+\section{Joint Ordering (JO)}\label{joint-ordering-jo}}
+
+Using Joint replenishment problem
+
+Assumptions:
+
+\begin{itemize}
+\tightlist
+\item
+  One supplier with outbound storage.
+\item
+  \(i=\{1,...,n\}\) products
+\item
+  Demand rates: \(de_i\)
+\item
+  Stock\_holding cost rates: \(c_i^{sh}\)
+\item
+  Specific setup costs: \(c_i^{or}\)
+\item
+  General setup costs: \(c^{-or}\)
+\item
+  Cycle time of product \(i\): \(T_i\)
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{n <-}\StringTok{ }\KeywordTok{length}\NormalTok{(product_data}\OperatorTok{$}\StringTok{`}\DataTypeTok{box ID}\StringTok{`}\NormalTok{)}
+\NormalTok{c.or0 <-}\StringTok{ }\NormalTok{cord}
+\NormalTok{c.or <-}\StringTok{ }\NormalTok{product_data}\OperatorTok{$}\NormalTok{ordering_cost}
+\CommentTok{#H.vec <- 0.5 * dei * c.sh}
+\CommentTok{# based on the previous definition, I think this should be the vector of holding cost multipliers}
+\NormalTok{H.vec <-}\StringTok{ }\FloatTok{0.1} \OperatorTok{*}\StringTok{ }\NormalTok{product_data}\OperatorTok{$}\NormalTok{box_cost }\OperatorTok{*}\StringTok{ }\NormalTok{dei }\OperatorTok{*}\StringTok{ }\FloatTok{.05}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{objective-function-with-no-capacity-constraint}{%
+\subsection{Objective Function with no capacity
+constraint}\label{objective-function-with-no-capacity-constraint}}
+
+\begin{itemize}
+\tightlist
+\item
+  \(B=\)basic cycle time
+\item
+  \(H_i=0.5 \cdot de_i \cdot c_i^{sh}\)
+\item
+  \(H_0=0\) Holding cost multiplier are \(H_0 \space and \space H_i\)
+\item
+  \[C(m_i B)=\sum_{i=0}^n (\frac {c_i^{or}}{m_i \cdot B}+H_i \cdot m_i \cdot B) == \frac {c_o^{or}}{B}+ \sum_{i=1}^n (\frac {c_i^{or}}{m_i \cdot B}+H_i \cdot m_i \cdot B)  \\ subject \space to: \quad \quad \quad \quad \quad \quad \quad \quad \quad  \\ m_i \ge m_0 \quad \forall i >0 \\m_i \in \mathbb N \qquad \forall i   \]
+\end{itemize}
+
+--\textgreater{} an important side note is that the JRP is basically a
+quite standard EOQ problem which uses the substitution
+\(T_i = \frac{q_i}{y_i}\), i.e., \(q_i = T_i \cdot y_i\). Then, you
+substitute \(T_i = m_i \cdot B\) ans result in the JRP (adding the
+common ordering cost).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{jrp.obj.fun <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(m , B, cor, Hvec, cor0) cor0}\OperatorTok{/}\NormalTok{B }\OperatorTok{+}\StringTok{ }\KeywordTok{sum}\NormalTok{(cor}\OperatorTok{/}\NormalTok{B}\OperatorTok{/}\NormalTok{m) }\OperatorTok{+}\StringTok{ }\KeywordTok{sum}\NormalTok{(Hvec}\OperatorTok{*}\NormalTok{B}\OperatorTok{*}\NormalTok{m)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{itemize}
+\tightlist
+\item
+  \emph{Cycle Time}
+\end{itemize}
+
+we determine \(T_i=\sqrt (\frac {c_i^{or}}{H_i})\) and
+\(T^C=\frac {\sum_{j=0}^{i´} c_j^{or}}{\sum_{j=0}^{i´}H_j}\)
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# calculate cycle times}
+\NormalTok{T.vec <-}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(c.or}\OperatorTok{/}\NormalTok{H.vec)}
+\CommentTok{# order products}
+\NormalTok{reo.id <-}\StringTok{ }\KeywordTok{order}\NormalTok{(T.vec)}
+\NormalTok{T.vec <-}\StringTok{ }\NormalTok{T.vec[reo.id]}
+\NormalTok{c.or <-}\StringTok{ }\NormalTok{c.or[reo.id]}
+\NormalTok{H.vec <-}\StringTok{ }\NormalTok{H.vec[reo.id]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(kableExtra)}
+\CommentTok{# calculate T^2 and cumu. cost shares}
+\NormalTok{res.mat <-}\StringTok{ }\KeywordTok{t}\NormalTok{(}\KeywordTok{cbind}\NormalTok{(c.or}\OperatorTok{/}\NormalTok{H.vec,(c.or0 }\OperatorTok{+}\StringTok{ }\KeywordTok{cumsum}\NormalTok{(c.or))}\OperatorTok{/}\KeywordTok{cumsum}\NormalTok{(H.vec)))}
+\NormalTok{df <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(res.mat)}
+\KeywordTok{colnames}\NormalTok{(df) <-}\StringTok{ }\NormalTok{reo.id }
+\KeywordTok{rownames}\NormalTok{(df) <-}\StringTok{ }\KeywordTok{c}\NormalTok{(  }\StringTok{"$T_i$"}\NormalTok{ ,}\StringTok{"$T^C$"}\NormalTok{  )}
+\KeywordTok{kable}\NormalTok{(df,}\StringTok{"pandoc"}\NormalTok{, }\DataTypeTok{row.names =}\NormalTok{ T)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr@{}}
+\toprule
+& 2 & 10 & 7 & 15 & 9 & 41 & 58 & 19 & 20 & 3 & 4 & 57 & 59 & 14 & 5 & 1
+& 33 & 61 & 13 & 29 & 18 & 50 & 34 & 21 & 55 & 60 & 23 & 52 & 38 & 37 &
+25 & 39 & 51 & 32 & 8 & 28 & 46 & 62 & 40 & 24 & 16 & 11 & 17 & 22 & 27
+& 35 & 43 & 54 & 12 & 44 & 49 & 30 & 36 & 31 & 56 & 53 & 48 & 45 & 6 &
+47 & 42 & 26\tabularnewline
+\midrule
+\endhead
+\(T_i\) & 0.0382267 & 0.0603996 & 0.0609578 & 0.1312837 & 0.1386933 &
+0.1505069 & 0.1863759 & 0.1917569 & 0.2162798 & 0.2340313 & 0.2340313 &
+0.2956970 & 0.3237855 & 0.3420110 & 0.3475209 & 0.3535823 & 0.360787 &
+0.3705910 & 0.3719344 & 0.4616422 & 0.4805659 & 0.4879191 & 0.4933740 &
+0.5109046 & 0.5184141 & 0.5453574 & 0.5707763 & 0.6088280 & 0.6371456 &
+0.6431282 & 0.7229639 & 0.7321459 & 0.7392425 & 0.7437377 & 0.7507846 &
+0.7534617 & 0.8096825 & 0.8143559 & 0.8145020 & 0.8345069 & 0.9019674 &
+0.9275114 & 0.9667907 & 0.9667907 & 1.1006004 & 1.2827420 & 1.7848644 &
+1.8048261 & 1.8759019 & 1.8860475 & 2.1640806 & 2.2005832 & 2.2525567 &
+2.3341649 & 2.4570025 & 2.8058361 & 2.990431 & 3.2053953 & 3.9393939 &
+4.0253328 & 4.4725920 & 4.8251487\tabularnewline
+\(T^C\) & 1.1850269 & 0.6773894 & 0.4868911 & 0.4335155 & 0.4030040 &
+0.3779735 & 0.3682662 & 0.3553749 & 0.3469157 & 0.3434564 & 0.3402027 &
+0.3390686 & 0.3387211 & 0.3388306 & 0.3390391 & 0.3393194 & 0.339949 &
+0.3406959 & 0.3413849 & 0.3439588 & 0.3467108 & 0.3484405 & 0.3511962 &
+0.3540758 & 0.3558808 & 0.3578387 & 0.3611501 & 0.3633866 & 0.3668845 &
+0.3703375 & 0.3744710 & 0.3783107 & 0.3808510 & 0.3848678 & 0.3880990 &
+0.3920134 & 0.3958810 & 0.3994464 & 0.4032003 & 0.4072237 & 0.4114570 &
+0.4149225 & 0.4192641 & 0.4235378 & 0.4281485 & 0.4331128 & 0.4383827 &
+0.4418859 & 0.4464695 & 0.4517309 & 0.4553593 & 0.4611589 & 0.4665945 &
+0.4724095 & 0.4760717 & 0.4798304 & 0.485518 & 0.4912544 & 0.4963752 &
+0.5022832 & 0.5082564 & 0.5146683\tabularnewline
+\bottomrule
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# identify break}
+\KeywordTok{which}\NormalTok{(res.mat[}\DecValTok{1}\NormalTok{,] }\OperatorTok{>}\StringTok{ }\NormalTok{res.mat[}\DecValTok{2}\NormalTok{,])}\CommentTok{# break occured after 13}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  [1] 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38
+## [26] 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{id.comb <-}\StringTok{ }\KeywordTok{min}\NormalTok{(}\KeywordTok{which}\NormalTok{(res.mat[}\DecValTok{1}\NormalTok{,] }\OperatorTok{>}\StringTok{ }\NormalTok{res.mat[}\DecValTok{2}\NormalTok{,])) }\OperatorTok{-}\StringTok{ }\DecValTok{1} \CommentTok{#3}
+\NormalTok{id.comb}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 13
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# calculate B}
+\NormalTok{B <-}\StringTok{ }\KeywordTok{min}\NormalTok{(T.vec) }\CommentTok{#0.01955164}
+\CommentTok{# solution with m - integers #######################}
+\NormalTok{m.vec.int <-}\StringTok{ }\KeywordTok{round}\NormalTok{(T.vec}\OperatorTok{/}\NormalTok{B,}\DecValTok{0}\NormalTok{)}
+\CommentTok{#I need to address this}
+\NormalTok{m.vec.int[}\DecValTok{1}\OperatorTok{:}\NormalTok{id.comb] <-}\StringTok{ }\DecValTok{1}  
+\CommentTok{# re-optimize B for fixed m.vec}
+\NormalTok{B.int <-}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{sum}\NormalTok{(c.or}\OperatorTok{/}\NormalTok{m.vec.int)}\OperatorTok{/}\KeywordTok{sum}\NormalTok{(m.vec.int}\OperatorTok{*}\NormalTok{H.vec))}\CommentTok{#0.02014868}
+\CommentTok{# total cost }
+\NormalTok{c.cost.int <-}\StringTok{ }\KeywordTok{jrp.obj.fun}\NormalTok{( }\DataTypeTok{m =}\NormalTok{ m.vec.int, }\DataTypeTok{B=}\NormalTok{B.int, }\DataTypeTok{cor =}\NormalTok{ c.or,}\DataTypeTok{Hvec=}\NormalTok{H.vec, }\DataTypeTok{cor0 =}\NormalTok{ c.or0)}\CommentTok{#192606}
+\NormalTok{df <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\KeywordTok{rbind}\NormalTok{(}\KeywordTok{round}\NormalTok{(T.vec}\OperatorTok{/}\NormalTok{B,}\DecValTok{2}\NormalTok{), }\KeywordTok{round}\NormalTok{(T.vec}\OperatorTok{/}\NormalTok{B), m.vec.int))}
+\KeywordTok{colnames}\NormalTok{(df) <-}\StringTok{ }\NormalTok{reo.id }
+\KeywordTok{rownames}\NormalTok{(df) <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"$m_i=}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{frac\{T_i\}\{B\}$"}\NormalTok{ ,}\StringTok{"$[m_i]$"}\NormalTok{, }\StringTok{"$[}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{tilde\{m\}_i]$"}\NormalTok{ )}
+\KeywordTok{kable}\NormalTok{(df,}\StringTok{"pandoc"}\NormalTok{, }\DataTypeTok{row.names =}\NormalTok{ T)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr@{}}
+\toprule
+& 2 & 10 & 7 & 15 & 9 & 41 & 58 & 19 & 20 & 3 & 4 & 57 & 59 & 14 & 5 & 1
+& 33 & 61 & 13 & 29 & 18 & 50 & 34 & 21 & 55 & 60 & 23 & 52 & 38 & 37 &
+25 & 39 & 51 & 32 & 8 & 28 & 46 & 62 & 40 & 24 & 16 & 11 & 17 & 22 & 27
+& 35 & 43 & 54 & 12 & 44 & 49 & 30 & 36 & 31 & 56 & 53 & 48 & 45 & 6 &
+47 & 42 & 26\tabularnewline
+\midrule
+\endhead
+\(m_i=\frac{T_i}{B}\) & 1 & 1.26 & 1.26 & 1.85 & 1.9 & 1.98 & 2.21 &
+2.24 & 2.38 & 2.47 & 2.47 & 2.78 & 2.91 & 2.99 & 3.02 & 3.04 & 3.07 &
+3.11 & 3.12 & 3.48 & 3.55 & 3.57 & 3.59 & 3.66 & 3.68 & 3.78 & 3.86 &
+3.99 & 4.08 & 4.1 & 4.35 & 4.38 & 4.4 & 4.41 & 4.43 & 4.44 & 4.6 & 4.62
+& 4.62 & 4.67 & 4.86 & 4.93 & 5.03 & 5.03 & 5.37 & 5.79 & 6.83 & 6.87 &
+7.01 & 7.02 & 7.52 & 7.59 & 7.68 & 7.81 & 8.02 & 8.57 & 8.84 & 9.16 &
+10.15 & 10.26 & 10.82 & 11.23\tabularnewline
+\([m_i]\) & 1 & 1.00 & 1.00 & 2.00 & 2.0 & 2.00 & 2.00 & 2.00 & 2.00 &
+2.00 & 2.00 & 3.00 & 3.00 & 3.00 & 3.00 & 3.00 & 3.00 & 3.00 & 3.00 &
+3.00 & 4.00 & 4.00 & 4.00 & 4.00 & 4.00 & 4.00 & 4.00 & 4.00 & 4.00 &
+4.0 & 4.00 & 4.00 & 4.0 & 4.00 & 4.00 & 4.00 & 5.0 & 5.00 & 5.00 & 5.00
+& 5.00 & 5.00 & 5.00 & 5.00 & 5.00 & 6.00 & 7.00 & 7.00 & 7.00 & 7.00 &
+8.00 & 8.00 & 8.00 & 8.00 & 8.00 & 9.00 & 9.00 & 9.00 & 10.00 & 10.00 &
+11.00 & 11.00\tabularnewline
+\([\tilde{m}_i]\) & 1 & 1.00 & 1.00 & 1.00 & 1.0 & 1.00 & 1.00 & 1.00 &
+1.00 & 1.00 & 1.00 & 1.00 & 1.00 & 3.00 & 3.00 & 3.00 & 3.00 & 3.00 &
+3.00 & 3.00 & 4.00 & 4.00 & 4.00 & 4.00 & 4.00 & 4.00 & 4.00 & 4.00 &
+4.00 & 4.0 & 4.00 & 4.00 & 4.0 & 4.00 & 4.00 & 4.00 & 5.0 & 5.00 & 5.00
+& 5.00 & 5.00 & 5.00 & 5.00 & 5.00 & 5.00 & 6.00 & 7.00 & 7.00 & 7.00 &
+7.00 & 8.00 & 8.00 & 8.00 & 8.00 & 8.00 & 9.00 & 9.00 & 9.00 & 10.00 &
+10.00 & 11.00 & 11.00\tabularnewline
+\bottomrule
+\end{longtable}
+
+Reoptimizing basic cycle time yields \(B=\) 0.24 and the total cost are
+\ensuremath{1.864693\times 10^{4}}
+
+The order quantities are given by multiplying the cycle times \(T_i\)
+with demand rates \(y_i\), i.e.~\(q_i = T_i \cdot de_i\) such that
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dei <-}\StringTok{ }\NormalTok{dei[reo.id]}
+\NormalTok{df <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\KeywordTok{rbind}\NormalTok{( m.vec.int, }\KeywordTok{round}\NormalTok{(m.vec.int}\OperatorTok{*}\NormalTok{B, }\DecValTok{2}\NormalTok{), }\KeywordTok{round}\NormalTok{(m.vec.int}\OperatorTok{*}\NormalTok{B}\OperatorTok{*}\NormalTok{dei, }\DecValTok{2}\NormalTok{) ))}
+\KeywordTok{colnames}\NormalTok{(df) <-}\StringTok{ }\NormalTok{reo.id }
+\KeywordTok{rownames}\NormalTok{(df) <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"$[}\CharTok{\textbackslash{}\textbackslash{}}\StringTok{tilde\{m\}_i]$"}\NormalTok{, }\StringTok{"$T_i$"}\NormalTok{, }\StringTok{"$q_i$"}\NormalTok{ )}
+\KeywordTok{kable}\NormalTok{(df,}\StringTok{"pandoc"}\NormalTok{, }\DataTypeTok{row.names =}\NormalTok{ T)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr@{}}
+\toprule
+& 2 & 10 & 7 & 15 & 9 & 41 & 58 & 19 & 20 & 3 & 4 & 57 & 59 & 14 & 5 & 1
+& 33 & 61 & 13 & 29 & 18 & 50 & 34 & 21 & 55 & 60 & 23 & 52 & 38 & 37 &
+25 & 39 & 51 & 32 & 8 & 28 & 46 & 62 & 40 & 24 & 16 & 11 & 17 & 22 & 27
+& 35 & 43 & 54 & 12 & 44 & 49 & 30 & 36 & 31 & 56 & 53 & 48 & 45 & 6 &
+47 & 42 & 26\tabularnewline
+\midrule
+\endhead
+\([\tilde{m}_i]\) & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 &
+1.00 & 1.00 & 1.00 & 1.00 & 1.00 & 1.00 & 3.00 & 3.00 & 3.00 & 3.00 &
+3.00 & 3.00 & 3.00 & 4.00 & 4.00 & 4.00 & 4.00 & 4.00 & 4.00 & 4.00 &
+4.00 & 4.00 & 4.00 & 4.00 & 4.00 & 4.00 & 4.00 & 4.00 & 4.00 & 5.00 &
+5.00 & 5.00 & 5.00 & 5.00 & 5.00 & 5.00 & 5.00 & 5.00 & 6.00 & 7.00 &
+7.00 & 7.00 & 7.00 & 8.00 & 8.00 & 8.00 & 8.00 & 8.00 & 9.00 & 9.00 &
+9.00 & 10.00 & 10.00 & 11.00 & 11.00\tabularnewline
+\(T_i\) & 0.20 & 0.20 & 0.20 & 0.20 & 0.20 & 0.20 & 0.20 & 0.20 & 0.20 &
+0.20 & 0.20 & 0.20 & 0.20 & 0.59 & 0.59 & 0.59 & 0.59 & 0.59 & 0.59 &
+0.59 & 0.78 & 0.78 & 0.78 & 0.78 & 0.78 & 0.78 & 0.78 & 0.78 & 0.78 &
+0.78 & 0.78 & 0.78 & 0.78 & 0.78 & 0.78 & 0.78 & 0.98 & 0.98 & 0.98 &
+0.98 & 0.98 & 0.98 & 0.98 & 0.98 & 0.98 & 1.17 & 1.37 & 1.37 & 1.37 &
+1.37 & 1.56 & 1.56 & 1.56 & 1.56 & 1.56 & 1.76 & 1.76 & 1.76 & 1.96 &
+1.96 & 2.15 & 2.15\tabularnewline
+\(q_i\) & 401.59 & 214.09 & 164.82 & 356.82 & 71.36 & 267.66 & 142.73 &
+142.73 & 67.06 & 85.64 & 85.64 & 59.63 & 267.66 & 535.52 & 459.27 &
+357.21 & 214.09 & 1284.54 & 214.09 & 268.05 & 1070.65 & 535.72 & 714.03
+& 1427.27 & 535.72 & 238.53 & 285.45 & 285.45 & 570.91 & 570.91 & 714.03
+& 778.94 & 190.82 & 268.25 & 659.28 & 143.12 & 595.35 & 2140.90 & 595.35
+& 892.53 & 713.63 & 1070.45 & 669.64 & 669.64 & 238.53 & 214.68 & 150.55
+& 99.91 & 150.55 & 231.30 & 114.18 & 228.36 & 153.28 & 228.36 & 172.05 &
+193.56 & 193.56 & 297.38 & 215.07 & 267.86 & 294.64 &
+524.77\tabularnewline
+\bottomrule
+\end{longtable}
+
+--\textgreater{} Now the question is: Is this feasible? --\textgreater{}
+no:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{q.vec <-}\StringTok{ }\NormalTok{m.vec.int}\OperatorTok{*}\NormalTok{B}\OperatorTok{*}\NormalTok{dei}
+\KeywordTok{const.fun}\NormalTok{(q.vec) }\OperatorTok{>}\StringTok{ }\NormalTok{rack_total_width}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] TRUE
+\end{verbatim}
+
+\hypertarget{including-capacity-constraint}{%
+\subsection{Including capacity
+constraint}\label{including-capacity-constraint}}
+
+When you try to optimize the JRP directly, without introducing the
+substitution \(T_i = m_i \cdot B\) you need to update the JRP function
+as follows
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(ROI)}
+\NormalTok{jrp.obj.fun2 <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(Tvec, cor, Hvec, cor0) }\KeywordTok{sum}\NormalTok{(cor0}\OperatorTok{/}\NormalTok{Tvec) }\OperatorTok{+}\StringTok{ }\KeywordTok{sum}\NormalTok{(cor}\OperatorTok{/}\NormalTok{Tvec) }\OperatorTok{+}\StringTok{ }\KeywordTok{sum}\NormalTok{(Hvec}\OperatorTok{*}\NormalTok{Tvec)}
+\CommentTok{# you need to initialize the parameters in the objective function --> Tvec is to be optimized over, the rest is given}
+\NormalTok{jrp.obj.fun2 <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(Tvec, }\DataTypeTok{cor=}\NormalTok{c.or, }\DataTypeTok{Hvec =}\NormalTok{ H.vec, }\DataTypeTok{cor0 =}\NormalTok{ c.or0) }\KeywordTok{sum}\NormalTok{(cor0}\OperatorTok{/}\NormalTok{Tvec) }\OperatorTok{+}\StringTok{ }\KeywordTok{sum}\NormalTok{(cor}\OperatorTok{/}\NormalTok{Tvec) }\OperatorTok{+}\StringTok{ }\KeywordTok{sum}\NormalTok{(Hvec}\OperatorTok{*}\NormalTok{Tvec)}
+
+\NormalTok{qopt2 <-}\StringTok{ }\KeywordTok{OP}\NormalTok{(}
+  \DataTypeTok{objective =} \KeywordTok{F_objective}\NormalTok{(}\DataTypeTok{F=}\NormalTok{jrp.obj.fun2 , }\DataTypeTok{n=}\DecValTok{62}\NormalTok{),}
+  \DataTypeTok{types =} \KeywordTok{rep}\NormalTok{(}\StringTok{"C"}\NormalTok{,n),}
+  \DataTypeTok{bounds =} \KeywordTok{V_bound}\NormalTok{(}\DataTypeTok{ub=} \KeywordTok{rep}\NormalTok{(}\DecValTok{30}\NormalTok{, }\DecValTok{62}\NormalTok{), }\DataTypeTok{lb=} \KeywordTok{rep}\NormalTok{(.}\DecValTok{001}\NormalTok{,}\DecValTok{62}\NormalTok{))}
+\NormalTok{) }
+
+\KeywordTok{jrp.obj.fun2}\NormalTok{(m.vec.int}\OperatorTok{*}\NormalTok{B)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 190854.8
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{jrp.obj.fun2}\NormalTok{(}\KeywordTok{rep}\NormalTok{(.}\DecValTok{00001}\NormalTok{,}\DecValTok{62}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 9724500000
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{jrp.obj.fun2}\NormalTok{(}\KeywordTok{rep}\NormalTok{(}\DecValTok{15}\NormalTok{,}\DecValTok{62}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 173920.9
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# you don't need Alabama here as there is no constraint. Basically you can also optimize this problem by taking derivatives}
+\NormalTok{copt_sol2 <-}\StringTok{ }\KeywordTok{ROI_solve}\NormalTok{(qopt2, }\DataTypeTok{start =}\NormalTok{ m.vec.int}\OperatorTok{*}\NormalTok{B)}
+\NormalTok{copt_sol2}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Optimal solution found.
+## The objective value is: 5.671162e+04
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{copt_sol2}\OperatorTok{$}\NormalTok{solution}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  [1] 1.088585 1.205916 1.211482 1.610233 1.827376 1.777823 2.403673 1.946072
+##  [9] 2.066763 2.834621 2.834621 3.027640 3.168186 2.598990 3.005912 3.310737
+## [17] 2.669365 2.882996 2.992507 3.019514 3.080768 3.889118 3.121562 3.176564
+## [25] 4.008821 4.111671 3.357506 4.344364 3.657869 3.674983 3.778708 3.921105
+## [33] 4.787066 3.832582 4.251650 3.857556 4.123498 4.273728 4.135742 4.059718
+## [41] 4.220639 4.725596 4.369676 4.369676 4.662268 5.033303 6.122219 7.479830
+## [49] 6.720508 6.293368 8.190459 6.592474 6.877702 6.789620 8.727140 9.326039
+## [57] 7.924437 8.204295 9.738636 9.193840 9.691096 9.761625
+\end{verbatim}
+
+--\textgreater{} You should integrate the shelf capacity constraint
+--\textgreater{} I also recommmend to stick with the basic period
+approach
+
+This is formally defined as
+\[ \sum_{i=1}^n b_i \cdot \left\lceil\frac{b^{-1}_i \cdot q_i}{rl} \right \rceil \leq \text{tot_rack_length}\]
+Thus, with the substitution above, the left-hand side changes to
+\[ \sum_{i=1}^n b_i \cdot \left\lceil\frac{b^{-1}_i \cdot T_i \cdot y_i}{rl} \right \rceil = \sum_{i=1}^n b_i \cdot \left\lceil\frac{b^{-1}_i \cdot m_i \cdot B \cdot y_i}{rl} \right \rceil\]
+
+Thus, you can change the constraint function quite easily
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{const.fun2 <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(m, }\DataTypeTok{B =}\NormalTok{ B.start, }\DataTypeTok{y=}\NormalTok{ dei, }\DataTypeTok{bns =}\NormalTok{ product_data}\OperatorTok{$}\NormalTok{b_not_sorting, }\DataTypeTok{bs =}\NormalTok{ product_data}\OperatorTok{$}\NormalTok{b_sorting, }\DataTypeTok{rl =}\NormalTok{ rack_length) \{}
+  \KeywordTok{sum}\NormalTok{(bs }\OperatorTok{*}\StringTok{ }\KeywordTok{ceiling}\NormalTok{( bns }\OperatorTok{*}\StringTok{ }\NormalTok{m}\OperatorTok{*}\NormalTok{B}\OperatorTok{*}\NormalTok{y }\OperatorTok{/}\StringTok{ }\NormalTok{rl))}
+\NormalTok{  \}}
+\end{Highlighting}
+\end{Shaded}
+
+Then, you can use the original JRP function and update the model by
+including the capacity constraint. Therefore I recommend that you fix
+\(B\) to some appropriate value based on the feasible solution above
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# we reinitialize the vectors}
+\NormalTok{n <-}\StringTok{ }\KeywordTok{length}\NormalTok{(product_data}\OperatorTok{$}\StringTok{`}\DataTypeTok{box ID}\StringTok{`}\NormalTok{)}
+\NormalTok{c.or0 <-}\StringTok{ }\NormalTok{cord}
+\NormalTok{c.or <-}\StringTok{ }\NormalTok{product_data}\OperatorTok{$}\NormalTok{ordering_cost}
+\NormalTok{H.vec <-}\StringTok{ }\FloatTok{0.1} \OperatorTok{*}\StringTok{ }\NormalTok{product_data}\OperatorTok{$}\NormalTok{box_cost }\OperatorTok{*}\StringTok{ }\NormalTok{dei }\OperatorTok{*}\StringTok{ }\FloatTok{.05}
+
+
+\NormalTok{T.feas <-}\StringTok{ }\NormalTok{copt_sol}\OperatorTok{$}\NormalTok{solution}\OperatorTok{/}\NormalTok{dei}
+\NormalTok{B.start <-}\StringTok{ }\KeywordTok{min}\NormalTok{(T.feas)}
+
+\NormalTok{jrp.obj.fun <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(m , }\DataTypeTok{B =}\NormalTok{ B.start, }\DataTypeTok{cor =}\NormalTok{ c.or, }\DataTypeTok{Hvec =}\NormalTok{ H.vec, }\DataTypeTok{cor0 =}\NormalTok{ c.or0) cor0}\OperatorTok{/}\NormalTok{B }\OperatorTok{+}\StringTok{ }\KeywordTok{sum}\NormalTok{(cor}\OperatorTok{/}\NormalTok{B}\OperatorTok{/}\NormalTok{m) }\OperatorTok{+}\StringTok{ }\KeywordTok{sum}\NormalTok{(Hvec}\OperatorTok{*}\NormalTok{B}\OperatorTok{*}\NormalTok{m)}
+\KeywordTok{jrp.obj.fun}\NormalTok{(}\DataTypeTok{m=} \KeywordTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{62}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 637548.5
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{const.fun2}\NormalTok{(}\DataTypeTok{m=} \KeywordTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{62}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 30710
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{qopt3 <-}\StringTok{ }\KeywordTok{OP}\NormalTok{(}
+  \DataTypeTok{objective =} \KeywordTok{F_objective}\NormalTok{(}\DataTypeTok{F=}\NormalTok{jrp.obj.fun ,}\DataTypeTok{n=}\NormalTok{n),}
+  \CommentTok{# now integer decision variables}
+  \DataTypeTok{types =} \KeywordTok{rep}\NormalTok{(}\StringTok{"C"}\NormalTok{,n),}
+  \DataTypeTok{bounds =} \KeywordTok{V_bound}\NormalTok{(}\DataTypeTok{li =} \DecValTok{1}\OperatorTok{:}\NormalTok{n, }\DataTypeTok{ui =} \DecValTok{1}\OperatorTok{:}\NormalTok{n, }\DataTypeTok{ub=} \KeywordTok{rep}\NormalTok{(}\DecValTok{50}\NormalTok{, n) , }\DataTypeTok{lb=} \KeywordTok{rep}\NormalTok{(}\DecValTok{1}\NormalTok{, n)),}
+  \DataTypeTok{constraints =} \KeywordTok{F_constraint}\NormalTok{(}\DataTypeTok{F=}\NormalTok{const.fun2,}
+                             \DataTypeTok{dir=}\StringTok{"<="}\NormalTok{,}
+                             \DataTypeTok{rhs =}\NormalTok{ rack_total_width)}
+\NormalTok{)}
+\CommentTok{# god starting point essential --> m = T.feas/B.start}
+\NormalTok{copt_sol3 <-}\StringTok{ }\KeywordTok{ROI_solve}\NormalTok{(qopt3, }\DataTypeTok{start =}\NormalTok{ T.feas}\OperatorTok{/}\NormalTok{B.start , }\DataTypeTok{solver =} \StringTok{"alabama"}\NormalTok{)}
+
+\NormalTok{copt_sol3}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Optimal solution found.
+## The objective value is: 2.995570e+05
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{copt_sol3}\OperatorTok{$}\NormalTok{solution}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  [1]  1.170216  2.058202  2.659007  1.228243  6.767516  1.585471  3.224297
+##  [8]  3.306719  6.581928  5.135785  5.176733  7.046884  1.677003  2.484818
+## [15]  3.137165  3.870683  6.610658  1.000000  6.391675  5.084520  1.810626
+## [22]  3.522467  2.607628  1.243999  3.314029  7.418879  6.159184  6.007995
+## [29]  3.353804  3.025090  2.420317  2.369492  9.712787  6.616536  2.625977
+## [36] 11.745209  3.959746  1.101099  3.757977  2.713174  3.068089  2.018689
+## [43]  3.150255  3.234185  9.118329 13.535975 20.081831 29.808734 18.837767
+## [50] 14.468471 30.257074 15.352284 21.860900 14.114695 22.233015 19.444603
+## [57] 19.982857 14.488533 20.823118 16.200768 18.792868 10.526122
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{jrp.obj.fun}\NormalTok{(}\DataTypeTok{m=}\NormalTok{ copt_sol3}\OperatorTok{$}\NormalTok{solution)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 299557
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{const.fun2}\NormalTok{(}\DataTypeTok{m=}\NormalTok{ copt_sol3}\OperatorTok{$}\NormalTok{solution) }\OperatorTok{<=}\StringTok{ }\NormalTok{rack_total_width}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] TRUE
+\end{verbatim}
+
+Now you should have some good starting solution. Still you need to round
+the solution. If standard rounding does not yield a feasible solution,
+rounding down should:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# not feasible}
+\KeywordTok{const.fun2}\NormalTok{(}\KeywordTok{round}\NormalTok{(copt_sol3}\OperatorTok{$}\NormalTok{solution)) }\OperatorTok{<=}\StringTok{ }\NormalTok{rack_total_width}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] FALSE
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# feasible}
+\KeywordTok{const.fun2}\NormalTok{(}\KeywordTok{floor}\NormalTok{(copt_sol3}\OperatorTok{$}\NormalTok{solution)) }\OperatorTok{<=}\StringTok{ }\NormalTok{rack_total_width}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] TRUE
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# potential starting solution}
+\NormalTok{m.start <-}\StringTok{ }\KeywordTok{floor}\NormalTok{(copt_sol3}\OperatorTok{$}\NormalTok{solution) }\CommentTok{# multiplier m}
+\NormalTok{q.start <-}\StringTok{ }\KeywordTok{ceiling}\NormalTok{(m.start }\OperatorTok{*}\StringTok{ }\NormalTok{B.start }\OperatorTok{*}\StringTok{ }\NormalTok{dei)   }\CommentTok{# order quantity q (in boxes, rounded up)}
+\end{Highlighting}
+\end{Shaded}
+
+Afterwards, you have to find a layout scheme such that a precise shelf
+layout results.
+
+As you rightly point out you need to calculate the number of lanes
+\(l(q_i)\) required for each product given a certain order quantity
+\(q_i\) (integer number of boxes):
+
+\[l(q_i) =\left\lceil \frac{q_i}{n_i} \right\rceil\] whereby \(n_i\) is
+the number of boxes per lane dedicated to product \(i\). I.e.,
+\(n_i = \left\lfloor \frac{rl}{b_i^{-1}} \right\rfloor\). Thus, for the
+solution of the JRP we have:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{l.start <-}\StringTok{ }\KeywordTok{ceiling}\NormalTok{(q.start}\OperatorTok{/}\KeywordTok{floor}\NormalTok{(rack_length}\OperatorTok{/}\NormalTok{product_data}\OperatorTok{$}\NormalTok{b_not_sorting))}
+\NormalTok{l.start}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  [1] 1 1 1 1 2 2 3 3 3 3 3 3 2 2 2 2 2 2 2 2 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1 1 1
+## [39] 1 1 1 1 1 1 1 2 1 1 1 2 1 1 1 1 2 1 1 2 1 1 2 2
+\end{verbatim}
+
+Now, these lanes have to be assigned to the levels of the shelves.
+Therefore, we first need to determine the types of lanes required. The
+lanes are just described by their width. Due to the safety margins we
+should round the lane width to full centimeter. I.e., we need to assign
+lanes with the following widths
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{unique}\NormalTok{(}\KeywordTok{round}\NormalTok{(product_data}\OperatorTok{$}\NormalTok{b_sorting}\OperatorTok{/}\DecValTok{100}\NormalTok{)}\OperatorTok{*}\DecValTok{100}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 200 400 600
+\end{verbatim}
+
+Now comes the tricky part: We have to decide how many lanes of a certain
+width should be assigned for each level. Luckily, there is only a small
+number of useful patterns of lanes per level. To be precise there are 9
+efficient patterns to arrange these 3 lane types (assuming we use each
+level exhaustively):
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{patterns <-}\StringTok{ }\KeywordTok{rbind}\NormalTok{(}
+\KeywordTok{c}\NormalTok{(}\DecValTok{8}\NormalTok{,}\DecValTok{0}\NormalTok{,}\DecValTok{0}\NormalTok{),}
+\KeywordTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{4}\NormalTok{,}\DecValTok{0}\NormalTok{),}
+\KeywordTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{,}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{),}
+\KeywordTok{c}\NormalTok{(}\DecValTok{2}\NormalTok{,}\DecValTok{0}\NormalTok{,}\DecValTok{2}\NormalTok{),}
+\KeywordTok{c}\NormalTok{(}\DecValTok{6}\NormalTok{,}\DecValTok{1}\NormalTok{,}\DecValTok{0}\NormalTok{),}
+\KeywordTok{c}\NormalTok{(}\DecValTok{4}\NormalTok{,}\DecValTok{2}\NormalTok{,}\DecValTok{0}\NormalTok{),}
+\KeywordTok{c}\NormalTok{(}\DecValTok{2}\NormalTok{,}\DecValTok{3}\NormalTok{,}\DecValTok{0}\NormalTok{),}
+\KeywordTok{c}\NormalTok{(}\DecValTok{3}\NormalTok{,}\DecValTok{1}\NormalTok{,}\DecValTok{1}\NormalTok{),}
+\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{2}\NormalTok{,}\DecValTok{1}\NormalTok{)}
+\NormalTok{)}
+\KeywordTok{colnames}\NormalTok{(patterns) <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"200"}\NormalTok{,}\StringTok{"400"}\NormalTok{,}\StringTok{"600"}\NormalTok{)}
+
+\NormalTok{patterns}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       200 400 600
+##  [1,]   8   0   0
+##  [2,]   0   4   0
+##  [3,]   0   1   2
+##  [4,]   2   0   2
+##  [5,]   6   1   0
+##  [6,]   4   2   0
+##  [7,]   2   3   0
+##  [8,]   3   1   1
+##  [9,]   1   2   1
+\end{verbatim}
+
+Let \(p_{k,j}\) indicate the number of lanes of type \(j\) associated to
+pattern \(k\). Now we need to assess the number of lanes per required of
+each type. As outlined above, we know the number of lanes per product
+\(l(q_i)\), thus we can deduce the demand for lane type \(j\) (\(ld_j\))
+by summing up the \(l(q_i)\) for each lane type, i.e.,
+\(ld_j = \sum_{i \in P|b_i=j} l(q_i)\):
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# assign lane width as names}
+\KeywordTok{names}\NormalTok{(l.start) <-}\StringTok{ }\KeywordTok{round}\NormalTok{(product_data}\OperatorTok{$}\NormalTok{b_sorting}\OperatorTok{/}\DecValTok{100}\NormalTok{)}\OperatorTok{*}\DecValTok{100} 
+
+\CommentTok{# number of items with lane types 200, 400, 600 that is demand for each lane type}
+\NormalTok{ld <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\KeywordTok{sum}\NormalTok{(l.start[}\KeywordTok{names}\NormalTok{(l.start) }\OperatorTok{==}\StringTok{ "200"}\NormalTok{]),}
+\KeywordTok{sum}\NormalTok{(l.start[}\KeywordTok{names}\NormalTok{(l.start) }\OperatorTok{==}\StringTok{ "400"}\NormalTok{]),}
+\KeywordTok{sum}\NormalTok{(l.start[}\KeywordTok{names}\NormalTok{(l.start) }\OperatorTok{==}\StringTok{ "600"}\NormalTok{]))}
+\end{Highlighting}
+\end{Shaded}
+
+So, finally, we need to select for each level an pattern and assure that
+the lane demand is met. Let \(x_{m,k} \in \{0,1\}\) indicate whether
+pattern \(k=1,...,9\) is selected for level \(m= 1,...,32\). Then, we
+need to set up a model that assures that enough lanes are assigned for
+each type \(j\)
+
+\[ \sum_{m = 1}^{32}\sum_{k = 1}^9 x_{m,k} \cdot p_{k,j} \geq ld_j \quad \forall j \in \{200,400,600\}\]
+
+and to each level just one pattern can be assigned.
+
+\[ \sum_{k = 1}^9 x_{m,k} \leq 1 \quad \forall m = 1,...,32\]
+
+As each pattern has the same rest (see Excel file), the objective
+function is more or less free to choose. E.g. you could minimize the
+total number of pattern assignments
+\(\min \rightarrow \sum_{m,k} x_{m,k}\). The final assignment, which
+product is exactly assigned to which lane can then be done manually. To
+solve the model, an integer solver is required.
+
+\hypertarget{pattern-assignment}{%
+\section{Pattern Assignment}\label{pattern-assignment}}
+
+using Mixed Interger Linear Programming (MILP)
+
+\[\min \rightarrow \sum_{m=1}^{32}\sum_{k=1}^{9} x_{m,k}  \\ \sum_{m = 1}^{32}\sum_{k = 1}^9 x_{m,k} \cdot p_{k,j} \geq ld_j \quad \forall j \in \{200,400,600\} \\  \sum_{k = 1}^9 x_{m,k} \leq 1 \quad \forall m = 1,...,32 \\ x_{m,k} \in \{0,1\}\]
+M= 32 levels,K= 9 patterns \(x_{m,k}\) consist of a vector of decision
+variables with \((M \cdot K)\) 288 elements
+\(X= ( x_{11},x_{12},..x_{1,32},....x_{9,32} )\). There are \$ J+M= 33\$
+constraints. Thus the right hand ride vector
+\(b=(\vec J,1_1,...1_{32})\). Correspondingly, the constraint matrix
+\(A\) has dimension \(33 \times 288\) and looks as follows:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{n.m <-}\StringTok{ }\DecValTok{32}                      \CommentTok{# number of levels}
+\NormalTok{n.k <-}\StringTok{ }\KeywordTok{length}\NormalTok{(patterns[,}\DecValTok{1}\NormalTok{])    }\CommentTok{# number of patterns}
+
+\NormalTok{nam.M <-}\StringTok{ }\KeywordTok{paste}\NormalTok{(}\StringTok{"M"}\NormalTok{, }\DecValTok{1}\OperatorTok{:}\NormalTok{n.m, }\DataTypeTok{sep =} \StringTok{""}\NormalTok{)}
+\NormalTok{nam.K <-}\StringTok{ }\KeywordTok{paste}\NormalTok{(}\StringTok{"K"}\NormalTok{, }\DecValTok{1}\OperatorTok{:}\NormalTok{n.k, }\DataTypeTok{sep =} \StringTok{""}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\end{document}
